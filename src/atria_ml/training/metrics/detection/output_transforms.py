@@ -1,4 +1,4 @@
-from atria_models.outputs import MMDetEvaluationOutput
+from atria_models.data_types.outputs import MMDetEvaluationOutput
 
 from atria_ml.training.metrics.detection.typing import (
     GroundTruthInstances,

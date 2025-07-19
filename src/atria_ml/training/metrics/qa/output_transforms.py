@@ -1,5 +1,5 @@
 import torch
-from atria_models.outputs import QAModelOutput, SequenceQAModelOutput
+from atria_models.data_types.outputs import QAModelOutput, SequenceQAModelOutput
 
 
 def _anls_output_transform(output: QAModelOutput) -> tuple[list[str], list[str]]:

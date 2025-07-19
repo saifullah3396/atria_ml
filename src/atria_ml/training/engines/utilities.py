@@ -49,7 +49,7 @@ from typing import Any
 import torch
 from atria_core.logger.logger import get_logger
 from atria_core.utilities.strings import _indent_string
-from atria_models.outputs import ModelOutput
+from atria_models.data_types.outputs import ModelOutput
 from ignite.engine import Engine
 from ignite.metrics import Metric
 from omegaconf import DictConfig, OmegaConf

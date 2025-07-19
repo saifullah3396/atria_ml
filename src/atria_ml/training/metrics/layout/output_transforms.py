@@ -1,4 +1,4 @@
-from atria_models.outputs import LayoutTokenClassificationModelOutput
+from atria_models.data_types.outputs import LayoutTokenClassificationModelOutput
 
 
 def _output_transform(output: LayoutTokenClassificationModelOutput):

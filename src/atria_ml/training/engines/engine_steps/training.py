@@ -154,7 +154,7 @@ class TrainingStep(BaseEngineStep):
         Returns:
             Tuple[torch.Tensor, ModelOutput]: The loss and model output.
         """
-        from atria_models.outputs import ModelOutput
+        from atria_models.data_types.outputs import ModelOutput
         from torch.amp import autocast
 
         with autocast(device_type=self._device.type, enabled=self._with_amp):
@@ -391,7 +391,7 @@ class GANTrainingStep(TrainingStep):
         Returns:
             Tuple[torch.Tensor, ModelOutput]: The loss and model output.
         """
-        from atria_models.outputs import ModelOutput
+        from atria_models.data_types.outputs import ModelOutput
         from torch.amp import autocast
 
         with autocast(device_type=self._device.type, enabled=self._with_amp):
