@@ -7,33 +7,25 @@ _zen_exclude:
 - n_devices
 - backend
 defaults:
-- /model_pipeline@model_pipeline: layout_token_classification
 - /metric_factory@metric_factory.precision: layout_precision
 - /metric_factory@metric_factory.recall: layout_recall
 - /metric_factory@metric_factory.f1_score: layout_f1
 - /engine@inference_engine: default_inference_engine
-- /data_transform@runtime_transforms: document_instance_tokenizer/semantic_entity_recognition
 - _self_
-model_pipeline: ???
 inference_engine: ???
 task_type: layout_entity_recognition
 evaluation_dataloader:
   _target_: atria_datasets.pipelines.utilities.auto_dataloader
   _partial_: true
   batch_size: 64
-  num_workers: 4
+  num_workers: 0
   pin_memory: true
   drop_last: false
-allowed_keys:
-- id
-- index
-- doc_id
-- image
-- ground_truth
+allowed_keys: null
 collate_fn: default_collate
 hydra:
   run:
-    dir: outputs/evaluator/${dataset.name}/${model_pipeline.model.name}/${now:%Y-%m-%d}/${now:%H-%M-%S}
+    dir: outputs/inferencer/${dataset.name}/${now:%Y-%m-%d}/${now:%H-%M-%S}
   output_subdir: hydra
   job:
     chdir: false

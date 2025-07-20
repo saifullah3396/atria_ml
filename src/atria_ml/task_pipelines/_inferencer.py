@@ -23,10 +23,9 @@ Usage:
     evaluation process and an `_initialize` method for setting up the necessary components.
 """
 
-import logging
 from collections.abc import Callable, Iterator
 from functools import partial
-from typing import Any, ClassVar
+from typing import ClassVar
 
 from atria_core.logger.logger import get_logger
 from atria_core.types import TaskType
@@ -43,15 +42,13 @@ from atria_ml.training.engines.evaluation import InferenceEngine
 
 logger = get_logger(__name__)
 
-_DEFAULT_ALLOWED_KEYS = ["index", "sample_id", "page_id", "total_num_pages", "gt"]
-
 
 @TASK_PIPELINE.register(
     "inferencer",
     zen_meta={
         "hydra": {
             "run": {
-                "dir": "outputs/evaluator/${dataset.name}/${model_pipeline.model.name}/${now:%Y-%m-%d}/${now:%H-%M-%S}"
+                "dir": "outputs/inferencer/${dataset.name}/${now:%Y-%m-%d}/${now:%H-%M-%S}"
             },
             "output_subdir": "hydra",
             "job": {"chdir": False},
@@ -66,37 +63,28 @@ class Inferencer(RepresentationMixin):
     _REGISTRY_CONFIGS: ClassVar[type[dict]] = {
         "image_classification": {
             "hydra_defaults": [
-                {"/model_pipeline@model_pipeline": "image_classification"},
                 {"/metric_factory@metric_factory.accuracy": "accuracy"},
                 {"/metric_factory@metric_factory.precision": "precision"},
                 {"/metric_factory@metric_factory.recall": "recall"},
                 {"/metric_factory@metric_factory.f1_score": "f1_score"},
                 {"/engine@inference_engine": "default_inference_engine"},
-                {"/data_transform@runtime_transforms": "image/default"},
                 "_self_",
             ],
-            "allowed_keys": ["id", "index", "doc_id", "image", "ground_truth"],
             "task_type": TaskType.image_classification,
         },
         "sequence_classification": {
             "hydra_defaults": [
-                {"/model_pipeline@model_pipeline": "sequence_classification"},
                 {"/metric_factory@metric_factory.accuracy": "accuracy"},
                 {"/metric_factory@metric_factory.precision": "precision"},
                 {"/metric_factory@metric_factory.recall": "recall"},
                 {"/metric_factory@metric_factory.f1_score": "f1_score"},
                 {"/engine@inference_engine": "default_inference_engine"},
-                {
-                    "/data_transform@runtime_transforms": "document_instance_tokenizer/sequence_classification"
-                },
                 "_self_",
             ],
-            "allowed_keys": ["id", "index", "doc_id", "image", "ground_truth"],
             "task_type": TaskType.sequence_classification,
         },
         "semantic_entity_recognition": {
             "hydra_defaults": [
-                {"/model_pipeline@model_pipeline": "token_classification"},
                 {"/metric_factory@metric_factory.accuracy": "seqeval_accuracy_score"},
                 {"/metric_factory@metric_factory.precision": "seqeval_precision_score"},
                 {"/metric_factory@metric_factory.recall": "seqeval_recall_score"},
@@ -105,54 +93,35 @@ class Inferencer(RepresentationMixin):
                     "/metric_factory@metric_factory.classification_report": "seqeval_classification_report"
                 },
                 {"/engine@inference_engine": "default_inference_engine"},
-                {
-                    "/data_transform@runtime_transforms": "document_instance_tokenizer/semantic_entity_recognition"
-                },
                 "_self_",
             ],
-            "allowed_keys": ["id", "index", "doc_id", "image", "ground_truth"],
             "task_type": TaskType.semantic_entity_recognition,
         },
         "layout_entity_recognition": {
             "hydra_defaults": [
-                {"/model_pipeline@model_pipeline": "layout_token_classification"},
                 {"/metric_factory@metric_factory.precision": "layout_precision"},
                 {"/metric_factory@metric_factory.recall": "layout_recall"},
                 {"/metric_factory@metric_factory.f1_score": "layout_f1"},
                 {"/engine@inference_engine": "default_inference_engine"},
-                {
-                    "/data_transform@runtime_transforms": "document_instance_tokenizer/semantic_entity_recognition"
-                },
                 "_self_",
             ],
-            "allowed_keys": ["id", "index", "doc_id", "image", "ground_truth"],
             "task_type": TaskType.layout_entity_recognition,
         },
         "visual_question_answering": {
             "hydra_defaults": [
-                {"/model_pipeline@model_pipeline": "question_answering"},
                 {"/metric_factory@metric_factory.sequence_anls": "sequence_anls"},
                 {"/engine@inference_engine": "default_inference_engine"},
-                {
-                    "/data_transform@runtime_transforms": "document_instance_tokenizer/visual_question_answering"
-                },
                 "_self_",
             ],
-            "allowed_keys": ["id", "index", "doc_id", "image", "ground_truth"],
             "task_type": TaskType.visual_question_answering,
         },
         "layout_analysis": {
             "hydra_defaults": [
-                {"/model_pipeline@model_pipeline": "object_detection"},
                 {"/metric_factory@metric_factory.cocoeval": "cocoeval"},
                 {"/engine@inference_engine": "default_inference_engine"},
-                {
-                    "/data_transform@runtime_transforms": "document_instance_mmdet_transform/evaluation"
-                },
                 "_self_",
             ],
             "collate_fn": "mmdet_pseudo_collate",
-            "allowed_keys": ["id", "index", "doc_id", "image", "ground_truth"],
             "task_type": TaskType.layout_analysis,
         },
     }
@@ -161,9 +130,7 @@ class Inferencer(RepresentationMixin):
 
     Args:
         task_type (TaskType): The type of task being evaluated, such as image classification or question answering.
-        model_pipeline (partial[AtriaTaskModule]): A partially initialized task module for handling the model.
         inference_engine (partial[InferenceEngine]): A partially initialized test engine for running the evaluation.
-        runtime_transforms (DataTransformsDict): A dictionary of data transforms for runtime evaluation.
         evaluation_dataloader (partial): A partial function for creating the evaluation data loader.
         metric_factory (Optional[Dict[str, partial[Callable]]]): A dictionary of metric factories
             for computing evaluation metrics.
@@ -173,7 +140,6 @@ class Inferencer(RepresentationMixin):
 
     Attributes:
         _task_type (TaskType): The type of task being evaluated.
-        _model_pipeline (partial[AtriaTaskModule]): A partially initialized task module for handling the model.
         _inference_engine (partial[InferenceEngine]): A partially initialized test engine for running the evaluation.
         _runtime_transforms (DataTransformsDict): A dictionary of data transforms for runtime evaluation.
         _evaluation_dataloader (partial): A partial function for creating the evaluation data loader.
@@ -186,25 +152,21 @@ class Inferencer(RepresentationMixin):
     def __init__(
         self,
         task_type: TaskType,
-        model_pipeline: AtriaModelPipeline,
         inference_engine: InferenceEngine,
         evaluation_dataloader: partial = partial(
             auto_dataloader,
             batch_size=64,
-            num_workers=4,
+            num_workers=0,
             pin_memory=True,
             drop_last=False,
         ),
-        runtime_transforms: Callable = None,
         metric_factory: dict[str, partial[Callable]] | None = None,
         allowed_keys: set | None = None,
         collate_fn: str = "default_collate",
     ):
         self._task_type = task_type
-        self._model_pipeline = model_pipeline
         self._inference_engine = inference_engine
         self._evaluation_dataloader = evaluation_dataloader
-        self._runtime_transforms = runtime_transforms
         self._metric_factory = metric_factory
         self._allowed_keys = allowed_keys
 
@@ -217,86 +179,66 @@ class Inferencer(RepresentationMixin):
         elif collate_fn == "mmdet_pseudo_collate":
             self._collate_fn = mmdet_pseudo_collate
 
+        self._model_pipeline: AtriaModelPipeline = None
+        self._compute_metrics: bool = False
+
     # ---------------------------
     # Public Methods
     # ---------------------------
 
-    @property
-    def model_pipeline(self) -> AtriaModelPipeline:
+    @classmethod
+    def load_from_registry(
+        cls,
+        task_type: TaskType,
+        model_pipeline: AtriaModelPipeline,
+        compute_metrics: bool = False,
+    ):
         """
-        Returns the model pipeline.
+        Loads the inferencer from the registry based on the module name or task type.
         """
-        return self._model_pipeline
+        inferencer: Inferencer = TASK_PIPELINE.load_from_registry(
+            module_name=f"inferencer/{task_type.value}"
+        )
+        assert inferencer._task_type == model_pipeline.task_type, (
+            f"Task type mismatch: {inferencer._task_type} != {model_pipeline.task_type}"
+        )
+        return inferencer.build(
+            model_pipeline=model_pipeline,
+            compute_metrics=compute_metrics,
+        )
 
     def build(
         self,
-        model_checkpoint: dict[str, Any] | None = None,
-        compute_metrics: bool = True,
+        model_pipeline: AtriaModelPipeline,
+        compute_metrics: bool = False,
     ) -> None:
         """
         Initializes the components required for evaluation, including logging, data pipeline, task module,
         and test engine.
         """
         self._initialize()
-        self._build_model_pipeline(model_checkpoint=model_checkpoint)
-        self._build_inference_engine(compute_metrics=compute_metrics)
+        self._build_inference_engine(
+            model_pipeline=model_pipeline, compute_metrics=compute_metrics
+        )
         return self
 
     def run(self, dataset: Iterator) -> None:
-        """
-        Executes the evaluation process by running the test engine.
-        """
-
-        data_loader = self._evaluation_dataloader(dataset, collate_fn=self._collate_fn)
+        data_loader = self._evaluation_dataloader(
+            dataset, num_workers=0, collate_fn=self._collate_fn
+        )
         return self._inference_engine.run(data_loader)
-
-    # ---------------------------
-    # Private Methods
-    # ---------------------------
 
     def _initialize(self):
         import ignite.distributed as idist
 
         from atria_ml.training.utilities.torch_utils import _initialize_torch
 
-        # Print log configuration
-        for handler in logger.handlers:
-            if isinstance(handler, logging.FileHandler):
-                logger.info(
-                    f"Verbose logs can be found at file: {handler.baseFilename}"
-                )
-
-        # Initialize PyTorch
         _initialize_torch()
-
-        # Initialize the device (CPU or GPU)
         self._device = idist.device()
 
-    def _build_model_pipeline(
-        self, model_checkpoint: dict[str, Any] | None = None
-    ) -> AtriaModelPipeline:
-        """
-        Builds the model pipeline for the evaluation process.
-        """
-
-        # Set up the model pipeline
-        if model_checkpoint is not None:
-            from ignite.handlers import Checkpoint
-
-            self._model_pipeline: AtriaModelPipeline = self._model_pipeline.build(
-                dataset_metadata=model_checkpoint.get("dataset_metadata")
-            )
-            try:
-                Checkpoint.load_objects(
-                    to_load={"model_pipeline": self._model_pipeline},
-                    checkpoint=model_checkpoint,
-                )
-            except Exception as e:
-                raise RuntimeError(f"Failed to load model checkpoint: {e}")
-        else:
-            self._model_pipeline = self._model_pipeline.build()
-
-    def _build_inference_engine(self, compute_metrics: bool = True) -> InferenceEngine:
+    def _build_inference_engine(
+        self, model_pipeline: AtriaModelPipeline, compute_metrics: bool = False
+    ) -> InferenceEngine:
         """
         Builds the test engine for the evaluation process.
         """
@@ -304,7 +246,7 @@ class Inferencer(RepresentationMixin):
         # Initialize the test engine from the partial
         logger.info("Setting up inference engine")
         self._inference_engine = self._inference_engine.build(
-            model_pipeline=self._model_pipeline,
+            model_pipeline=model_pipeline,
             device=self._device,
             metric_factory=self._metric_factory if compute_metrics else None,
         )

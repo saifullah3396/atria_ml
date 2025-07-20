@@ -13,9 +13,6 @@ def init_registry():
         name="TASK_PIPELINE", registry_group=RegistryGroup(name="task_pipeline")
     )
     ModuleRegistry().add_registry_group(
-        name="METRIC", registry_group=RegistryGroup(name="metric", is_factory=True)
-    )
-    ModuleRegistry().add_registry_group(
         name="LR_SCHEDULER",
         registry_group=RegistryGroup(name="lr_scheduler", is_factory=True),
     )

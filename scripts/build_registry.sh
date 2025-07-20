@@ -24,4 +24,4 @@ fi
 
 export PYTHONPATH="$PROJECT_ROOT/src:$PYTHONPATH"
 
-python $SCRIPT_DIR/../src/atria_ml/build_registry.py
+uv run python $SCRIPT_DIR/../src/atria_ml/build_registry.py

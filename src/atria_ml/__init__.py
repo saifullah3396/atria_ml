@@ -12,6 +12,6 @@ Author: Saifullah
 Date: April 14, 2025
 """
 
-from atria_ml.registry import ENGINE, LR_SCHEDULER, METRIC, OPTIMIZER, TASK_PIPELINE
+from atria_ml.registry import ENGINE, LR_SCHEDULER, OPTIMIZER, TASK_PIPELINE
 
-__all__ = ["TASK_PIPELINE", "METRIC", "ENGINE", "LR_SCHEDULER", "OPTIMIZER"]
+__all__ = ["TASK_PIPELINE", "ENGINE", "LR_SCHEDULER", "OPTIMIZER"]

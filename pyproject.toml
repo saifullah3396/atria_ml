@@ -28,6 +28,7 @@ dependencies = [
     "tensorboardx>=2.6.4",
     "torchinfo>=1.8.0",
     "h5py>=3.14.0",
+    "atria-metrics",
 ]
 
 
@@ -137,6 +138,7 @@ atria-hub = { path = "../atria_hub", editable = true }
 atria-core = { path = "../atria_core", editable = true }
 atria-transforms = { path = "../atria_transforms", editable = true }
 atria-datasets = { path = "../atria_datasets", editable = true }
+atria-metrics = { path = "../atria_metrics", editable = true }
 
 [[tool.uv.index]]
 name = "pytorch-cpu"
