@@ -1,8 +1,0 @@
-_target_: ignite.metrics.confusion_matrix.ConfusionMatrix
-_partial_: true
-average: recall
-output_transform:
-  path: atria_metrics.instance_classification.output_transforms._output_transform
-  _target_: hydra_zen.funcs.get_obj
-device: cpu
-skip_unrolling: true

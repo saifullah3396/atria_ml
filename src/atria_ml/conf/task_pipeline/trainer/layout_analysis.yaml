@@ -9,28 +9,16 @@ _zen_exclude:
 defaults:
 - /data_pipeline@data_pipeline: default
 - /model_pipeline@model_pipeline: object_detection
-- /metric_factory@metric_factory.cocoeval: cocoeval
 - /engine@training_engine: default_training_engine
 - /engine@validation_engine: default_validation_engine
 - /engine@test_engine: default_test_engine
 - /engine@visualization_engine: default_visualization_engine
-- /data_transform@data_pipeline.runtime_transforms.train: document_instance_mmdet_transform/train
-- /data_transform@data_pipeline.runtime_transforms.evaluation: document_instance_mmdet_transform/evaluation
 - override /optimizer_factory@training_engine.optimizer_factory: sgd
 - override /lr_scheduler_factory@training_engine.lr_scheduler_factory: multi_step_lr
 - _self_
 model_pipeline: ???
 test_engine: ???
-metric_factory: ???
-task_type: layout_analysis
 data_pipeline:
-  allowed_keys:
-  - index
-  - sample_id
-  - page_id
-  - total_num_pages
-  - gt
-  - image
   collate_fn: mmdet_pseudo_collate
 training_engine:
   model_checkpoint_config:
@@ -53,7 +41,7 @@ validation_engine:
 visualization_engine:
   visualize_every_n_epochs: 10
   visualize_on_start: false
-output_dir: outputs/trainer/layout_analysis/${data_pipeline.dataset.dataset_name}/${model_pipeline.model.name}/${experiment_name}
+output_dir: outputs/trainer/layout_analysis/${resolve_experiment_name:${experiment_name}}/
 seed: 42
 deterministic: false
 do_train: true
@@ -63,4 +51,4 @@ do_test: true
 vis_batch_size: 64
 n_devices: 1
 backend: nccl
-experiment_name: ???
+experiment_name: ''

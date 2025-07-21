@@ -7,11 +7,9 @@ _zen_exclude:
 - n_devices
 - backend
 defaults:
-- /metric_factory@metric_factory.sequence_anls: sequence_anls
 - /engine@inference_engine: default_inference_engine
 - _self_
 inference_engine: ???
-task_type: visual_question_answering
 evaluation_dataloader:
   _target_: atria_datasets.pipelines.utilities.auto_dataloader
   _partial_: true

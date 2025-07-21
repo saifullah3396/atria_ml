@@ -20,10 +20,8 @@ Version: 1.0.0
 License: MIT
 """
 
-import inspect
 from abc import abstractmethod
 from collections.abc import Callable
-from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional, Union
 
@@ -52,7 +50,6 @@ class AtriaEngine:
         epoch_length (Optional[int]): Number of iterations per epoch.
         outputs_to_running_avg (Optional[List[str]]): Outputs to compute running averages for.
         logging (LoggingConfig): Logging configuration.
-        metric_factory (Optional[Dict[str, partial[Callable]]]): Metrics to compute during training.
         metric_logging_prefix (Optional[str]): Prefix for metric logging.
         sync_batchnorm (bool): Whether to synchronize batch normalization across devices.
         test_run (bool): Whether this is a test run.
@@ -66,7 +63,6 @@ class AtriaEngine:
         epoch_length: int | None = None,
         outputs_to_running_avg: list[str] | None = None,
         logging: LoggingConfig = LoggingConfig(),
-        metric_factory: dict[str, partial[Callable]] | None = None,
         metric_logging_prefix: str | None = None,
         sync_batchnorm: bool = False,
         test_run: bool = False,
@@ -81,7 +77,6 @@ class AtriaEngine:
             epoch_length (Optional[int]): Number of iterations per epoch.
             outputs_to_running_avg (Optional[List[str]]): Outputs to compute running averages for.
             logging (LoggingConfig): Logging configuration.
-            metric_factory (Optional[Dict[str, partial[Callable]]]): Metrics to compute during training.
             metric_logging_prefix (Optional[str]): Prefix for metric logging.
             sync_batchnorm (bool): Whether to synchronize batch normalization across devices.
             test_run (bool): Whether this is a test run.
@@ -94,7 +89,6 @@ class AtriaEngine:
             outputs_to_running_avg if outputs_to_running_avg is not None else ["loss"]
         )
         self._logging = logging if logging is not None else LoggingConfig()
-        self._metric_factory = metric_factory
         self._metric_logging_prefix = metric_logging_prefix
         self._sync_batchnorm = sync_batchnorm
         self._test_run = test_run
@@ -155,7 +149,6 @@ class AtriaEngine:
         model_pipeline: "AtriaModelPipeline",
         dataloader: Union["DataLoader", "WebLoader"],
         device: Union[str, "torch.device"],
-        metric_factory: dict[str, partial[Callable]] | None = None,
         tb_logger: Optional["TensorboardLogger"] = None,
     ) -> "AtriaEngine":
         """
@@ -166,7 +159,6 @@ class AtriaEngine:
             model_pipeline (AtriaModelPipeline): Model pipeline to use.
             dataloader (Union[DataLoader, WebLoader]): Data loader for input data.
             device (Union[str, torch.device]): Device to run the engine on.
-            metric_factory (Optional[Dict[str, partial[Callable]]]): Metrics to compute during training.
             tb_logger (Optional[TensorboardLogger]): Tensorboard logger for logging.
 
         Returns:
@@ -179,7 +171,6 @@ class AtriaEngine:
         self._model_pipeline = model_pipeline
         self._dataloader = dataloader
         self._device = torch.device(device)
-        self._metric_factory = metric_factory
         self._tb_logger = tb_logger
 
         # initialize the engine step
@@ -292,27 +283,13 @@ class AtriaEngine:
         """
         from atria_ml.training.engines.utilities import _attach_metrics_to_engine
 
-        if self._metric_factory is not None:
-
-            def initialize_metric(metric):
-                possible_args = inspect.signature(metric).parameters
-
-                kwargs = {}
-                if "stage" in possible_args:
-                    kwargs["stage"] = self._engine_step.stage
-                if "device" in possible_args:
-                    kwargs["device"] = self._device
-                return metric(**kwargs)
-
+        if len(self._model_pipeline.metrics) > 0:
             logger.info(
-                f"Attaching metrics {self._metric_factory} to engine [{self.__class__.__name__}]"
+                f"Attaching metrics {self._model_pipeline.metrics} to engine [{self.__class__.__name__}]"
             )
             _attach_metrics_to_engine(
                 engine=engine,
-                metrics={
-                    key: initialize_metric(metric)
-                    for key, metric in self._metric_factory.items()
-                },
+                metrics=self._model_pipeline.metrics,
                 prefix=self._metric_logging_prefix,
                 stage=self._engine_step.stage,
             )

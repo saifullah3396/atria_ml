@@ -17,6 +17,7 @@ dependencies = [
     "atria-models",
     "atria-registry",
     "atria-transforms",
+    "atria-metrics",
     "anls>=0.0.2",
     "diffusers>=0.34.0",
     "mmcv==2.1.0",
@@ -28,7 +29,7 @@ dependencies = [
     "tensorboardx>=2.6.4",
     "torchinfo>=1.8.0",
     "h5py>=3.14.0",
-    "atria-metrics",
+    "codename>=1.1",
 ]
 
 

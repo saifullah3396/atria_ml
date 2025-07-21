@@ -22,10 +22,16 @@ if [[ -z "$PROJECT_ROOT" ]]; then
     exit 1
 fi
 
-export PYTHONPATH="$PROJECT_ROOT/src:$PROJECT_ROOT/../atria_core/src/"
+export PYTHONPATH="$PROJECT_ROOT/src"
 
+# task_pipeline=trainer/image_classification \
 python \
-    $SCRIPT_DIR/../../../src/atria/task_pipelines/data_visualizer.py \
-    dataset@data_pipeline.dataset=cifar10/default \
-    data_pipeline.dataset.data_dir=/tmp/cifar10/ \
+    -m atria_ml.task_pipelines.trainer2 \
+    dataset@data_pipeline.dataset=cifar10 \
+    model_pipeline.model.model_name=resnet18 \
+    data_pipeline.train_dataloader.batch_size=256 \
+    data_pipeline.evaluation_dataloader.batch_size=256 \
+    data_pipeline.train_dataloader.num_workers=8 \
+    data_pipeline.evaluation_dataloader.num_workers=8 \
+    experiment_name=train_cifar10_resnet50 \
     $@

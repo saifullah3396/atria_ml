@@ -39,30 +39,28 @@ Version: 1.0.0
 License: MIT
 """
 
-from __future__ import annotations
-
 from collections.abc import Mapping, Sequence
 from dataclasses import is_dataclass
 from functools import partial
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-import torch
 from atria_core.logger.logger import get_logger
 from atria_core.utilities.strings import _indent_string
 from atria_models.data_types.outputs import ModelOutput
-from ignite.engine import Engine
-from ignite.metrics import Metric
-from omegaconf import DictConfig, OmegaConf
-from torch import Tensor
+from omegaconf import DictConfig
 
 from atria_ml.training.utilities.constants import TrainingStage
+
+if TYPE_CHECKING:
+    import torch
+    from ignite.engine import Engine
+    from ignite.metrics import Metric
 
 logger = get_logger(__name__)
 
 TRAINING_ENGINE_KEY = "training_engine"
 MODEL_PIPELINE_CHECKPOINT_KEY = "model_pipeline"
 RUN_CONFIG_KEY = "run_config"
-INFERENCE_CONFIG_KEY = "inference_config"
 
 
 class RunConfig:
@@ -87,6 +85,16 @@ class RunConfig:
         """
         self._data = data
 
+    @property
+    def data(self) -> DictConfig:
+        """
+        Returns the configuration data.
+
+        Returns:
+            DictConfig: The configuration data.
+        """
+        return self._data
+
     def state_dict(self) -> dict[str, Any]:
         """
         Returns the configuration data as a dictionary.
@@ -94,7 +102,7 @@ class RunConfig:
         Returns:
             Dict[str, Any]: The configuration data.
         """
-        return OmegaConf.to_container(self._data, resolve=True)
+        return self._data
 
     def compare_configs(self, target_data: dict) -> bool:
         """
@@ -160,6 +168,8 @@ class FixedBatchIterator:
         Yields:
             dict: A batch of data with fixed size.
         """
+        import torch
+
         total_samples = 0
         current_batch = None
         for batch in self.dataloader:
@@ -231,8 +241,8 @@ def _extract_output(x: Any, index: int, key: str) -> Any:
 
 
 def _detach_tensors(
-    input: dict[str, Tensor] | ModelOutput,
-) -> dict[str, Tensor] | ModelOutput:
+    input: dict[str, "torch.Tensor"] | ModelOutput,
+) -> dict[str, "torch.Tensor"] | ModelOutput:
     """
     Detaches tensors from the computation graph.
 
@@ -255,8 +265,8 @@ def _detach_tensors(
 
 
 def _convert_tensor_to_half(
-    model_output: dict[str, Tensor] | ModelOutput,
-) -> dict[str, Tensor] | ModelOutput:
+    model_output: dict[str, "torch.Tensor"] | ModelOutput,
+) -> dict[str, "torch.Tensor"] | ModelOutput:
     """
     Converts tensors to half precision.
 
@@ -311,7 +321,10 @@ def _log_eval_metrics(logger, epoch, elapsed, tag, metrics):
 
 
 def _attach_metrics_to_engine(
-    engine: Engine, metrics: dict[str, Metric], stage: TrainingStage, prefix: str = None
+    engine: "Engine",
+    metrics: dict[str, "Metric"],
+    stage: TrainingStage,
+    prefix: str = None,
 ):
     """
     Attaches metrics to an engine.
@@ -337,7 +350,7 @@ def _attach_metrics_to_engine(
         )
 
 
-def _attach_nan_callback_to_engine(engine: Engine):
+def _attach_nan_callback_to_engine(engine: "Engine"):
     """
     Attaches a callback to handle NaN values.
 
@@ -354,7 +367,7 @@ def _attach_nan_callback_to_engine(engine: Engine):
     )
 
 
-def _attach_cuda_cache_callback_to_engine(engine: Engine):
+def _attach_cuda_cache_callback_to_engine(engine: "Engine"):
     """
     Attaches a callback to clear CUDA cache.
 
@@ -368,7 +381,7 @@ def _attach_cuda_cache_callback_to_engine(engine: Engine):
         engine.add_event_handler(Events.EPOCH_COMPLETED, _empty_cuda_cache)
 
 
-def _attach_gpu_stats_callback_to_engine(engine: Engine, logging_steps: int):
+def _attach_gpu_stats_callback_to_engine(engine: "Engine", logging_steps: int):
     """
     Attaches a callback to log GPU stats.
 
@@ -390,7 +403,7 @@ def _attach_gpu_stats_callback_to_engine(engine: Engine, logging_steps: int):
         )
 
 
-def _attach_time_profiler_to_engine(engine: Engine):
+def _attach_time_profiler_to_engine(engine: "Engine"):
     """
     Attaches a time profiler to the engine.
 
@@ -412,7 +425,10 @@ def _attach_time_profiler_to_engine(engine: Engine):
 
 
 def _attach_output_logging_to_engine(
-    engine: Engine, stage: TrainingStage, outputs_to_running_avg: list[str], alpha=0.95
+    engine: "Engine",
+    stage: TrainingStage,
+    outputs_to_running_avg: list[str],
+    alpha=0.95,
 ):
     """
     Attaches output logging to the engine.
@@ -433,7 +449,7 @@ def _attach_output_logging_to_engine(
         ).attach(engine, f"{stage}/running_avg_{key}")
 
 
-def _print_optimizers_info(optimizers: dict[str, torch.optim.Optimizer]) -> None:
+def _print_optimizers_info(optimizers: dict[str, "torch.optim.Optimizer"]) -> None:
     """
     Prints information about configured optimizers.
 
@@ -450,7 +466,7 @@ def _print_optimizers_info(optimizers: dict[str, torch.optim.Optimizer]) -> None
 
 
 def _print_schedulers_info(
-    lr_schedulers: dict[str, torch.optim.lr_scheduler.LRScheduler],
+    lr_schedulers: dict[str, "torch.optim.lr_scheduler.LRScheduler"],
 ) -> None:
     """
     Prints information about configured learning rate schedulers.

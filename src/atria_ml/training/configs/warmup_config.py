@@ -58,11 +58,6 @@ class WarmupConfig(BaseModel):
                     " any effect of warmup_ratio during training"
                 )
 
-        if self.warmup_ratio is None:
-            self.warmup_ratio = 0
-        if self.warmup_steps is None:
-            self.warmup_steps = 0
-
     def __repr__(self):
         """
         Returns a pretty-printed string representation of the warmup configuration.

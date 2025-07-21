@@ -13,15 +13,13 @@ defaults:
 - /engine@test_engine: default_test_engine
 - /engine@visualization_engine: default_visualization_engine
 - _self_
-task_type: ???
 data_pipeline: ???
 model_pipeline: ???
 training_engine: ???
 validation_engine: ???
 visualization_engine: ???
 test_engine: ???
-metric_factory: ???
-output_dir: outputs/trainer/image_classification/${data_pipeline.dataset.dataset_name}/${model_pipeline.model.name}/${experiment_name}
+output_dir: outputs/trainer/image_classification/${resolve_experiment_name:${experiment_name}}
 seed: 42
 deterministic: false
 do_train: true
@@ -31,4 +29,4 @@ do_test: true
 vis_batch_size: 64
 n_devices: 1
 backend: nccl
-experiment_name: ???
+experiment_name: ''

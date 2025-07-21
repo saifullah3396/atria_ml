@@ -7,13 +7,9 @@ _zen_exclude:
 - n_devices
 - backend
 defaults:
-- /metric_factory@metric_factory.precision: layout_precision
-- /metric_factory@metric_factory.recall: layout_recall
-- /metric_factory@metric_factory.f1_score: layout_f1
 - /engine@inference_engine: default_inference_engine
 - _self_
 inference_engine: ???
-task_type: layout_entity_recognition
 evaluation_dataloader:
   _target_: atria_datasets.pipelines.utilities.auto_dataloader
   _partial_: true

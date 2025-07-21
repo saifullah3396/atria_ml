@@ -26,12 +26,10 @@ import copy
 import math
 from collections import OrderedDict
 from collections.abc import Callable, Mapping
-from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional, Union, cast
 
 from atria_core.logger.logger import get_logger
-from ignite.engine import Engine
 
 from atria_ml.registry import ENGINE
 from atria_ml.training.configs.early_stopping_config import EarlyStoppingConfig
@@ -43,7 +41,7 @@ from atria_ml.training.configs.warmup_config import WarmupConfig
 from atria_ml.training.engines.atria_engine import AtriaEngine
 from atria_ml.training.engines.engine_steps.training import TrainingStep
 from atria_ml.training.engines.evaluation import ValidationEngine, VisualizationEngine
-from atria_ml.training.engines.utilities import INFERENCE_CONFIG_KEY, RunConfig
+from atria_ml.training.engines.utilities import RunConfig
 from atria_ml.training.schedulers.typing import LRSchedulerType, OptimizerType
 
 if TYPE_CHECKING:
@@ -208,6 +206,10 @@ class TrainingEngine(AtriaEngine):
         Returns:
             int: Total number of warmup steps.
         """
+        if self._warmup_config.warmup_steps is None:
+            self._warmup_config.warmup_steps = 0
+        if self._warmup_config.warmup_ratio is None:
+            self._warmup_config.warmup_ratio = 0.0
         return (
             self._warmup_config.warmup_steps
             if self._warmup_config.warmup_steps > 0
@@ -233,11 +235,9 @@ class TrainingEngine(AtriaEngine):
         dataloader: Union["DataLoader", "WebLoader"],
         device: Union[str, "torch.device"],
         grad_scaler: Optional["torch.cuda.amp.GradScaler"] = None,
-        metric_factory: dict[str, partial[Callable]] | None = None,
         validation_engine: ValidationEngine = None,
         visualization_engine: VisualizationEngine = None,
         tb_logger: Optional["TensorboardLogger"] = None,
-        inference_config: dict[str, Any] | None = None,
     ) -> "TrainingEngine":
         """
         Builds the training engine with the provided configurations.
@@ -251,7 +251,6 @@ class TrainingEngine(AtriaEngine):
             validation_engine (ValidationEngine, optional): Validation engine for evaluation.
             visualization_engine (VisualizationEngine, optional): Visualization engine for visualizing results.
             tb_logger (TensorboardLogger, optional): TensorBoard logger for logging metrics.
-            inference_config (Optional[Dict[str, Any]]): Configuration for inference.
 
         Returns:
             TrainingEngine: The configured training engine.
@@ -275,11 +274,9 @@ class TrainingEngine(AtriaEngine):
         self._dataloader = dataloader
         self._device = torch.device(device)
         self._grad_scaler = grad_scaler
-        self._metric_factory = metric_factory
         self._tb_logger = tb_logger
         self._validation_engine = validation_engine
         self._visualization_engine = visualization_engine
-        self._inference_config = inference_config
 
         # convert optimizers to dict if not already
         if not isinstance(self._optimizer_factory, dict):
@@ -791,7 +788,6 @@ class TrainingEngine(AtriaEngine):
 
         checkpoint_state_dict = {
             RUN_CONFIG_KEY: self._run_config,
-            INFERENCE_CONFIG_KEY: self._inference_config,
             TRAINING_ENGINE_KEY: engine,
             MODEL_PIPELINE_CHECKPOINT_KEY: self._model_pipeline,
         }
@@ -818,11 +814,7 @@ class TrainingEngine(AtriaEngine):
         # if only to save weights, remove all other keys
         if save_weights_only:
             for k in list(checkpoint_state_dict.keys()):
-                if k not in [
-                    TRAINING_ENGINE_KEY,
-                    MODEL_PIPELINE_CHECKPOINT_KEY,
-                    INFERENCE_CONFIG_KEY,
-                ]:
+                if k not in [TRAINING_ENGINE_KEY, MODEL_PIPELINE_CHECKPOINT_KEY]:
                     checkpoint_state_dict.pop(k)
 
         return checkpoint_state_dict

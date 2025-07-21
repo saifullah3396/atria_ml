@@ -25,8 +25,7 @@ Version: 1.0.0
 License: MIT
 """
 
-from collections.abc import Callable, Iterator
-from functools import partial
+from collections.abc import Iterator
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional, Union
 
@@ -78,7 +77,6 @@ class ValidationEngine(AtriaEngine):
         epoch_length: int | None = None,
         outputs_to_running_avg: list[str] | None = None,
         logging: LoggingConfig | None = LoggingConfig(),
-        metric_factory: dict[str, partial[Callable]] | None = None,
         metric_logging_prefix: str | None = None,
         test_run: bool = False,
         use_fixed_batch_iterator: bool = False,
@@ -97,7 +95,6 @@ class ValidationEngine(AtriaEngine):
             epoch_length (Optional[int]): Length of each epoch.
             outputs_to_running_avg (Optional[List[str]]): Outputs to calculate running average.
             logging (Optional[LoggingConfig]): Logging configuration.
-            metric_factory (Optional[Dict[str, partial[Callable]]]): Metrics for validation.
             metric_logging_prefix (Optional[str]): Prefix for metric logging.
             test_run (bool): Whether to run in test mode.
             use_fixed_batch_iterator (bool): Whether to use fixed batch iterator.
@@ -113,7 +110,6 @@ class ValidationEngine(AtriaEngine):
             epoch_length=epoch_length,
             outputs_to_running_avg=outputs_to_running_avg,
             logging=logging,
-            metric_factory=metric_factory,
             metric_logging_prefix=metric_logging_prefix,
             test_run=test_run,
             use_fixed_batch_iterator=use_fixed_batch_iterator,
@@ -262,7 +258,6 @@ class TestEngine(AtriaEngine):
         epoch_length: int | None = None,
         outputs_to_running_avg: list[str] | None = None,
         logging: LoggingConfig = LoggingConfig(),
-        metric_factory: dict[str, partial[Callable]] | None = None,
         metric_logging_prefix: str | None = None,
         test_run: bool = False,
         use_fixed_batch_iterator: bool = False,
@@ -280,7 +275,6 @@ class TestEngine(AtriaEngine):
             epoch_length (Optional[int]): Length of each epoch.
             outputs_to_running_avg (Optional[List[str]]): Outputs to calculate running average.
             logging (LoggingConfig): Logging configuration.
-            metric_factory (Optional[Dict[str, partial[Callable]]]): Metrics for testing.
             metric_logging_prefix (Optional[str]): Prefix for metric logging.
             test_run (bool): Whether to run in test mode.
             use_fixed_batch_iterator (bool): Whether to use fixed batch iterator.
@@ -295,7 +289,6 @@ class TestEngine(AtriaEngine):
             epoch_length=epoch_length,
             outputs_to_running_avg=outputs_to_running_avg,
             logging=logging,
-            metric_factory=metric_factory,
             metric_logging_prefix=metric_logging_prefix,
             test_run=test_run,
             use_fixed_batch_iterator=use_fixed_batch_iterator,
@@ -456,7 +449,6 @@ class VisualizationEngine(AtriaEngine):
         epoch_length: int | None = 1,
         outputs_to_running_avg: list[str] | None = None,
         logging: LoggingConfig = LoggingConfig(),
-        metric_factory: dict[str, partial[Callable]] | None = None,
         metric_logging_prefix: str | None = None,
         test_run: bool = False,
         use_fixed_batch_iterator: bool = False,
@@ -473,7 +465,6 @@ class VisualizationEngine(AtriaEngine):
             epoch_length (Optional[int]): Length of each epoch.
             outputs_to_running_avg (Optional[List[str]]): Outputs to calculate running average.
             logging (LoggingConfig): Logging configuration.
-            metric_factory (Optional[Dict[str, partial[Callable]]]): Metrics for visualization.
             metric_logging_prefix (Optional[str]): Prefix for metric logging.
             test_run (bool): Whether to run in test mode.
             use_fixed_batch_iterator (bool): Whether to use fixed batch iterator.
@@ -488,7 +479,6 @@ class VisualizationEngine(AtriaEngine):
             epoch_length=epoch_length,
             outputs_to_running_avg=outputs_to_running_avg,
             logging=logging,
-            metric_factory=metric_factory,
             metric_logging_prefix=metric_logging_prefix,
             test_run=test_run,
             use_fixed_batch_iterator=use_fixed_batch_iterator,
@@ -661,10 +651,7 @@ class InferenceEngine(AtriaEngine):
         )
 
     def build(
-        self,
-        model_pipeline: "AtriaModelPipeline",
-        device: Union[str, "torch.device"],
-        metric_factory: dict[str, partial[Callable]] | None = None,
+        self, model_pipeline: "AtriaModelPipeline", device: Union[str, "torch.device"]
     ) -> "AtriaEngine":
         """
         Build the engine with the specified configurations.
@@ -681,7 +668,6 @@ class InferenceEngine(AtriaEngine):
 
         self._model_pipeline = model_pipeline
         self._device = torch.device(device)
-        self._metric_factory = metric_factory
 
         # initialize the engine step
         self._engine_step = self._setup_engine_step()
@@ -772,7 +758,6 @@ class FeatureExtractorEngine(AtriaEngine):
             epoch_length=None,
             outputs_to_running_avg=[],
             logging=LoggingConfig(logging_steps=1, refresh_rate=1),
-            metric_factory=None,
             metric_logging_prefix=None,
             test_run=test_run,
         )

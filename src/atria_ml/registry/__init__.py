@@ -39,10 +39,9 @@ from atria_ml.registry.module_registry import init_registry
 init_registry()
 
 TASK_PIPELINE: RegistryGroup = ModuleRegistry().TASK_PIPELINE
-METRIC: RegistryGroup = ModuleRegistry().METRIC
 LR_SCHEDULER: RegistryGroup = ModuleRegistry().LR_SCHEDULER
 OPTIMIZER: RegistryGroup = ModuleRegistry().OPTIMIZER
 ENGINE: RegistryGroup = ModuleRegistry().ENGINE
 
 
-__all__ = ["TASK_PIPELINE", "METRIC", "LR_SCHEDULER", "OPTIMIZER", "ENGINE"]
+__all__ = ["TASK_PIPELINE", "LR_SCHEDULER", "OPTIMIZER", "ENGINE"]

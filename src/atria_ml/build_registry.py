@@ -63,17 +63,26 @@ class AtriaConfig:
                     "run": {"dir": "${output_dir}"},
                     "output_subdir": "hydra",
                     "job": {"chdir": False},
-                    "searchpath": ["pkg://atria_ml/conf"],
+                    "searchpath": [
+                        "pkg://atria_ml/conf",
+                        "pkg://atria_metrics/conf",
+                        "pkg://atria_models/conf",
+                        "pkg://atria_datasets/conf",
+                        "pkg://atria_transforms/conf",
+                    ],
                 },
-                "package": "atria",
+                "package": "atria_ml",
                 "version": "0.1.0",
                 "_zen_exclude": ["hydra", "package", "version"],
             },
-            provider="atria",
+            provider="atria_ml",
             package="__global__",
         )
 
 
 if __name__ == "__main__":
     AtriaConfig.initialize()
-    write_registry_to_yaml(str(Path(__file__).parent / "conf"))
+    write_registry_to_yaml(
+        str(Path(__file__).parent / "conf"),
+        types=["task_pipeline", "lr_scheduler", "optimizer", "engine"],
+    )

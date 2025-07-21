@@ -31,8 +31,8 @@ model_ema_config:
   update_every: 1
 warmup_config:
   _target_: atria_ml.training.configs.warmup_config.WarmupConfig
-  warmup_ratio: 0
-  warmup_steps: 0
+  warmup_ratio: null
+  warmup_steps: null
 early_stopping:
   _target_: atria_ml.training.configs.early_stopping_config.EarlyStoppingConfig
   enabled: false

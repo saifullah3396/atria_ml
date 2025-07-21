@@ -23,7 +23,7 @@ Usage:
     evaluation process and an `_initialize` method for setting up the necessary components.
 """
 
-from collections.abc import Callable, Iterator
+from collections.abc import Iterator
 from functools import partial
 from typing import ClassVar
 
@@ -63,95 +63,62 @@ class Inferencer(RepresentationMixin):
     _REGISTRY_CONFIGS: ClassVar[type[dict]] = {
         "image_classification": {
             "hydra_defaults": [
-                {"/metric_factory@metric_factory.accuracy": "accuracy"},
-                {"/metric_factory@metric_factory.precision": "precision"},
-                {"/metric_factory@metric_factory.recall": "recall"},
-                {"/metric_factory@metric_factory.f1_score": "f1_score"},
                 {"/engine@inference_engine": "default_inference_engine"},
                 "_self_",
-            ],
-            "task_type": TaskType.image_classification,
+            ]
         },
         "sequence_classification": {
             "hydra_defaults": [
-                {"/metric_factory@metric_factory.accuracy": "accuracy"},
-                {"/metric_factory@metric_factory.precision": "precision"},
-                {"/metric_factory@metric_factory.recall": "recall"},
-                {"/metric_factory@metric_factory.f1_score": "f1_score"},
                 {"/engine@inference_engine": "default_inference_engine"},
                 "_self_",
-            ],
-            "task_type": TaskType.sequence_classification,
+            ]
         },
         "semantic_entity_recognition": {
             "hydra_defaults": [
-                {"/metric_factory@metric_factory.accuracy": "seqeval_accuracy_score"},
-                {"/metric_factory@metric_factory.precision": "seqeval_precision_score"},
-                {"/metric_factory@metric_factory.recall": "seqeval_recall_score"},
-                {"/metric_factory@metric_factory.f1_score": "seqeval_f1_score"},
-                {
-                    "/metric_factory@metric_factory.classification_report": "seqeval_classification_report"
-                },
                 {"/engine@inference_engine": "default_inference_engine"},
                 "_self_",
-            ],
-            "task_type": TaskType.semantic_entity_recognition,
+            ]
         },
         "layout_entity_recognition": {
             "hydra_defaults": [
-                {"/metric_factory@metric_factory.precision": "layout_precision"},
-                {"/metric_factory@metric_factory.recall": "layout_recall"},
-                {"/metric_factory@metric_factory.f1_score": "layout_f1"},
                 {"/engine@inference_engine": "default_inference_engine"},
                 "_self_",
-            ],
-            "task_type": TaskType.layout_entity_recognition,
+            ]
         },
         "visual_question_answering": {
             "hydra_defaults": [
-                {"/metric_factory@metric_factory.sequence_anls": "sequence_anls"},
                 {"/engine@inference_engine": "default_inference_engine"},
                 "_self_",
-            ],
-            "task_type": TaskType.visual_question_answering,
+            ]
         },
         "layout_analysis": {
             "hydra_defaults": [
-                {"/metric_factory@metric_factory.cocoeval": "cocoeval"},
                 {"/engine@inference_engine": "default_inference_engine"},
                 "_self_",
             ],
             "collate_fn": "mmdet_pseudo_collate",
-            "task_type": TaskType.layout_analysis,
         },
     }
     """
     A task runner for evaluating machine learning models.
 
     Args:
-        task_type (TaskType): The type of task being evaluated, such as image classification or question answering.
         inference_engine (partial[InferenceEngine]): A partially initialized test engine for running the evaluation.
         evaluation_dataloader (partial): A partial function for creating the evaluation data loader.
-        metric_factory (Optional[Dict[str, partial[Callable]]]): A dictionary of metric factories
-            for computing evaluation metrics.
         allowed_keys (set): A set of allowed keys for the data pipeline.
         collate_fn (str): The collate function to use for data loading.
 
 
     Attributes:
-        _task_type (TaskType): The type of task being evaluated.
         _inference_engine (partial[InferenceEngine]): A partially initialized test engine for running the evaluation.
         _runtime_transforms (DataTransformsDict): A dictionary of data transforms for runtime evaluation.
         _evaluation_dataloader (partial): A partial function for creating the evaluation data loader.
-        _metric_factory (Optional[Dict[str, partial[Callable]]]): A dictionary of metric factories
-            for computing evaluation metrics.
         _allowed_keys (set): A set of allowed keys for the data pipeline.
         _collate_fn (str): The collate function to use for data loading.
     """
 
     def __init__(
         self,
-        task_type: TaskType,
         inference_engine: InferenceEngine,
         evaluation_dataloader: partial = partial(
             auto_dataloader,
@@ -160,14 +127,11 @@ class Inferencer(RepresentationMixin):
             pin_memory=True,
             drop_last=False,
         ),
-        metric_factory: dict[str, partial[Callable]] | None = None,
         allowed_keys: set | None = None,
         collate_fn: str = "default_collate",
     ):
-        self._task_type = task_type
         self._inference_engine = inference_engine
         self._evaluation_dataloader = evaluation_dataloader
-        self._metric_factory = metric_factory
         self._allowed_keys = allowed_keys
 
         assert collate_fn in ["default_collate", "mmdet_pseudo_collate"], (
@@ -203,14 +167,11 @@ class Inferencer(RepresentationMixin):
             f"Task type mismatch: {inferencer._task_type} != {model_pipeline.task_type}"
         )
         return inferencer.build(
-            model_pipeline=model_pipeline,
-            compute_metrics=compute_metrics,
+            model_pipeline=model_pipeline, compute_metrics=compute_metrics
         )
 
     def build(
-        self,
-        model_pipeline: AtriaModelPipeline,
-        compute_metrics: bool = False,
+        self, model_pipeline: AtriaModelPipeline, compute_metrics: bool = False
     ) -> None:
         """
         Initializes the components required for evaluation, including logging, data pipeline, task module,
@@ -246,7 +207,5 @@ class Inferencer(RepresentationMixin):
         # Initialize the test engine from the partial
         logger.info("Setting up inference engine")
         self._inference_engine = self._inference_engine.build(
-            model_pipeline=model_pipeline,
-            device=self._device,
-            metric_factory=self._metric_factory if compute_metrics else None,
+            model_pipeline=model_pipeline, device=self._device
         )

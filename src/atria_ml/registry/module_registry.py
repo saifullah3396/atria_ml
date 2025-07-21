@@ -10,16 +10,22 @@ def init_registry():
         return
     _initialized = True
     ModuleRegistry().add_registry_group(
-        name="TASK_PIPELINE", registry_group=RegistryGroup(name="task_pipeline")
+        name="TASK_PIPELINE",
+        registry_group=RegistryGroup(name="task_pipeline", default_provider="atria_ml"),
     )
     ModuleRegistry().add_registry_group(
         name="LR_SCHEDULER",
-        registry_group=RegistryGroup(name="lr_scheduler", is_factory=True),
+        registry_group=RegistryGroup(
+            name="lr_scheduler", is_factory=True, default_provider="atria_ml"
+        ),
     )
     ModuleRegistry().add_registry_group(
         name="OPTIMIZER",
-        registry_group=RegistryGroup(name="optimizer", is_factory=True),
+        registry_group=RegistryGroup(
+            name="optimizer", is_factory=True, default_provider="atria_ml"
+        ),
     )
     ModuleRegistry().add_registry_group(
-        name="ENGINE", registry_group=RegistryGroup(name="engine")
+        name="ENGINE",
+        registry_group=RegistryGroup(name="engine", default_provider="atria_ml"),
     )

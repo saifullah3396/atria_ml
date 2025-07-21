@@ -10,7 +10,11 @@ hydra:
     chdir: false
   searchpath:
   - pkg://atria_ml/conf
-package: atria
+  - pkg://atria_metrics/conf
+  - pkg://atria_models/conf
+  - pkg://atria_datasets/conf
+  - pkg://atria_transforms/conf
+package: atria_ml
 version: 0.1.0
 _zen_exclude:
 - hydra

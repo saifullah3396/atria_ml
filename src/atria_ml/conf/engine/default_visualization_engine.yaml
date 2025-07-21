@@ -9,7 +9,6 @@ logging:
   log_gpu_stats: false
   profile_time: false
   log_to_tb: true
-metric_factory: null
 metric_logging_prefix: null
 test_run: false
 use_fixed_batch_iterator: false

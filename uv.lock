@@ -169,12 +169,15 @@ version = "0.0.0"
 source = { editable = "../atria_core" }
 dependencies = [
     { name = "beautifulsoup4" },
+    { name = "codename" },
     { name = "coloredlogs" },
     { name = "coverage" },
     { name = "factory-boy" },
     { name = "faker" },
     { name = "imagesize" },
+    { name = "lazy-imports" },
     { name = "lazy-loader" },
+    { name = "lxml" },
     { name = "numpy" },
     { name = "omegaconf" },
     { name = "pillow" },
@@ -182,19 +185,31 @@ dependencies = [
     { name = "pydantic" },
     { name = "pytest" },
     { name = "rich" },
+    { name = "torch", version = "2.1.2", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'group-8-atria-ml-torch-cpu') or (platform_machine != 'aarch64' and extra == 'group-8-atria-ml-torch-cpu' and extra == 'group-8-atria-ml-torch-gpu') or (sys_platform == 'darwin' and extra == 'group-8-atria-ml-torch-cpu') or (sys_platform != 'linux' and extra == 'group-8-atria-ml-torch-cpu' and extra == 'group-8-atria-ml-torch-gpu')" },
+    { name = "torch", version = "2.1.2", source = { registry = "https://pypi.org/simple" }, marker = "(extra == 'group-8-atria-ml-torch-cpu' and extra == 'group-8-atria-ml-torch-gpu') or (extra != 'group-8-atria-ml-torch-cpu' and extra != 'group-8-atria-ml-torch-gpu')" },
+    { name = "torch", version = "2.1.2+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(platform_machine != 'aarch64' and sys_platform == 'linux' and extra == 'group-8-atria-ml-torch-cpu') or (sys_platform != 'darwin' and sys_platform != 'linux' and extra == 'group-8-atria-ml-torch-cpu') or (sys_platform == 'darwin' and extra == 'group-8-atria-ml-torch-cpu' and extra == 'group-8-atria-ml-torch-gpu') or (sys_platform == 'linux' and extra == 'group-8-atria-ml-torch-cpu' and extra == 'group-8-atria-ml-torch-gpu')" },
+    { name = "torch", version = "2.1.2+cu121", source = { registry = "https://download.pytorch.org/whl/cu121" }, marker = "extra == 'group-8-atria-ml-torch-gpu'" },
     { name = "torchtyping" },
+    { name = "torchvision", version = "0.16.2", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'group-8-atria-ml-torch-cpu') or (platform_machine != 'aarch64' and extra == 'group-8-atria-ml-torch-cpu' and extra == 'group-8-atria-ml-torch-gpu') or (sys_platform == 'darwin' and extra == 'group-8-atria-ml-torch-cpu') or (sys_platform != 'linux' and extra == 'group-8-atria-ml-torch-cpu' and extra == 'group-8-atria-ml-torch-gpu')" },
+    { name = "torchvision", version = "0.16.2", source = { registry = "https://download.pytorch.org/whl/cu121" }, marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'group-8-atria-ml-torch-gpu') or (platform_machine != 'aarch64' and extra == 'group-8-atria-ml-torch-cpu' and extra == 'group-8-atria-ml-torch-gpu') or (sys_platform != 'linux' and extra == 'group-8-atria-ml-torch-cpu' and extra == 'group-8-atria-ml-torch-gpu')" },
+    { name = "torchvision", version = "0.16.2", source = { registry = "https://pypi.org/simple" }, marker = "(extra == 'group-8-atria-ml-torch-cpu' and extra == 'group-8-atria-ml-torch-gpu') or (extra != 'group-8-atria-ml-torch-cpu' and extra != 'group-8-atria-ml-torch-gpu')" },
+    { name = "torchvision", version = "0.16.2+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(platform_machine != 'aarch64' and sys_platform == 'linux' and extra == 'group-8-atria-ml-torch-cpu') or (sys_platform != 'darwin' and sys_platform != 'linux' and extra == 'group-8-atria-ml-torch-cpu') or (sys_platform == 'darwin' and extra == 'group-8-atria-ml-torch-cpu' and extra == 'group-8-atria-ml-torch-gpu') or (sys_platform == 'linux' and extra == 'group-8-atria-ml-torch-cpu' and extra == 'group-8-atria-ml-torch-gpu')" },
+    { name = "torchvision", version = "0.16.2+cu121", source = { registry = "https://download.pytorch.org/whl/cu121" }, marker = "(platform_machine != 'aarch64' and extra == 'group-8-atria-ml-torch-gpu') or (sys_platform != 'linux' and extra == 'group-8-atria-ml-torch-gpu') or (extra == 'group-8-atria-ml-torch-cpu' and extra == 'group-8-atria-ml-torch-gpu')" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "beautifulsoup4", specifier = "==4.12.2" },
+    { name = "codename", specifier = ">=1.1" },
     { name = "coloredlogs", specifier = "==15.0.1" },
     { name = "coverage" },
     { name = "coverage", marker = "extra == 'test'" },
     { name = "factory-boy" },
     { name = "faker" },
     { name = "imagesize", specifier = ">=1.4.1" },
+    { name = "lazy-imports", specifier = ">=1.0.0" },
     { name = "lazy-loader", specifier = "==0.4" },
+    { name = "lxml", specifier = ">=6.0.0" },
     { name = "numpy", specifier = "==1.26.4" },
     { name = "omegaconf", specifier = "==2.3.0" },
     { name = "pillow", specifier = "==10.0.0" },
@@ -202,7 +217,9 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.11.7" },
     { name = "pytest" },
     { name = "rich", specifier = "==14.0.0" },
+    { name = "torch", specifier = "==2.1.2" },
     { name = "torchtyping", specifier = ">=0.1.5" },
+    { name = "torchvision", specifier = "==0.16.2" },
 ]
 provides-extras = ["test"]
 
@@ -212,14 +229,6 @@ dev = [
     { name = "ipykernel", specifier = ">=6.29.5" },
     { name = "pyarrow", specifier = ">=20.0.0" },
     { name = "ruff", specifier = ">=0.12.2" },
-]
-torch-cpu = [
-    { name = "torch", specifier = "==2.1.2", index = "https://download.pytorch.org/whl/cpu", conflict = { package = "atria-core", group = "torch-cpu" } },
-    { name = "torchvision", specifier = "==0.16.2", index = "https://download.pytorch.org/whl/cpu", conflict = { package = "atria-core", group = "torch-cpu" } },
-]
-torch-gpu = [
-    { name = "torch", specifier = "==2.1.2", index = "https://download.pytorch.org/whl/cu121", conflict = { package = "atria-core", group = "torch-gpu" } },
-    { name = "torchvision", specifier = "==0.16.2", index = "https://download.pytorch.org/whl/cu121", conflict = { package = "atria-core", group = "torch-gpu" } },
 ]
 
 [[package]]
@@ -234,18 +243,26 @@ dependencies = [
     { name = "datadings" },
     { name = "datasets" },
     { name = "deltalake" },
+    { name = "docile-benchmark" },
+    { name = "editdistance" },
     { name = "filelock" },
+    { name = "fire" },
     { name = "gdown" },
     { name = "hydra-core" },
     { name = "hydra-zen" },
     { name = "lakefs" },
+    { name = "lazy-loader" },
     { name = "msgpack" },
     { name = "pandarallel" },
     { name = "pandas" },
+    { name = "pyarrow-hotfix" },
+    { name = "pycocotools" },
     { name = "pyyaml" },
     { name = "ray" },
     { name = "requests" },
+    { name = "sacremoses" },
     { name = "scikit-learn" },
+    { name = "textdistance" },
     { name = "tqdm" },
     { name = "webdataset" },
     { name = "wids" },
@@ -253,7 +270,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "atria-core", editable = "../atria_core" },
+    { name = "atria-core", directory = "../atria_core" },
     { name = "atria-hub", directory = "../atria_hub" },
     { name = "atria-registry", editable = "../atria_registry" },
     { name = "boto3", specifier = ">=1.39.4" },
@@ -261,33 +278,32 @@ requires-dist = [
     { name = "datadings", git = "https://github.com/saifullah3396/datadings.git" },
     { name = "datasets", specifier = ">=4.0.0" },
     { name = "deltalake", specifier = ">=1.0.2" },
+    { name = "docile-benchmark", specifier = ">=0.3.4" },
+    { name = "editdistance", specifier = ">=0.8.1" },
     { name = "filelock", specifier = ">=3.18.0" },
+    { name = "fire", specifier = ">=0.7.0" },
     { name = "gdown", specifier = ">=5.2.0" },
     { name = "hydra-core", specifier = "==1.3.2" },
     { name = "hydra-zen", specifier = "==0.14.0" },
     { name = "lakefs", specifier = ">=0.11.1" },
-    { name = "mmcv", marker = "extra == 'transforms'", url = "https://download.openmmlab.com/mmcv/dist/cu121/torch2.1.0/mmcv-2.1.0-cp311-cp311-manylinux1_x86_64.whl" },
-    { name = "mmdet", marker = "extra == 'transforms'", specifier = "==3.3.0" },
+    { name = "lazy-loader", specifier = ">=0.4" },
     { name = "msgpack", specifier = ">=1.1.1" },
     { name = "pandarallel", specifier = ">=1.6.5" },
     { name = "pandas", specifier = ">=2.3.1" },
+    { name = "pyarrow-hotfix", specifier = ">=0.7" },
+    { name = "pycocotools", specifier = ">=2.0.10" },
     { name = "pytest", marker = "extra == 'test'" },
     { name = "pyyaml", specifier = ">=6.0.2" },
     { name = "ray", specifier = ">=2.47.1" },
     { name = "requests", specifier = ">=2.32.4" },
+    { name = "sacremoses", specifier = ">=0.1.1" },
     { name = "scikit-learn", specifier = ">=1.7.0" },
-    { name = "torch", marker = "extra == 'torch-cpu'", specifier = "==2.1.2", index = "https://download.pytorch.org/whl/cpu", conflict = { package = "atria-datasets", extra = "torch-cpu" } },
-    { name = "torch", marker = "extra == 'torch-gpu'", specifier = "==2.1.2", index = "https://download.pytorch.org/whl/cu121", conflict = { package = "atria-datasets", extra = "torch-gpu" } },
-    { name = "torch", marker = "extra == 'transforms'", specifier = "==2.1.2" },
-    { name = "torchvision", marker = "extra == 'torch-cpu'", specifier = "==0.16.2", index = "https://download.pytorch.org/whl/cpu", conflict = { package = "atria-datasets", extra = "torch-cpu" } },
-    { name = "torchvision", marker = "extra == 'torch-gpu'", specifier = "==0.16.2", index = "https://download.pytorch.org/whl/cu121", conflict = { package = "atria-datasets", extra = "torch-gpu" } },
-    { name = "torchvision", marker = "extra == 'transforms'", specifier = "==0.16.2" },
+    { name = "textdistance", specifier = ">=4.6.3" },
     { name = "tqdm", specifier = ">=4.67.1" },
-    { name = "transformers", marker = "extra == 'transforms'", specifier = ">=4.37.0" },
     { name = "webdataset", specifier = ">=1.0.2" },
     { name = "wids", specifier = ">=0.1.11" },
 ]
-provides-extras = ["torch-cpu", "torch-gpu", "transforms", "test"]
+provides-extras = ["test"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -400,6 +416,7 @@ dependencies = [
     { name = "atria-models" },
     { name = "atria-registry" },
     { name = "atria-transforms" },
+    { name = "codename" },
     { name = "diffusers" },
     { name = "h5py" },
     { name = "mmcv" },
@@ -442,6 +459,7 @@ requires-dist = [
     { name = "atria-models", editable = "../atria_models" },
     { name = "atria-registry", editable = "../atria_registry" },
     { name = "atria-transforms", editable = "../atria_transforms" },
+    { name = "codename", specifier = ">=1.1" },
     { name = "diffusers", specifier = ">=0.34.0" },
     { name = "h5py", specifier = ">=3.14.0" },
     { name = "mmcv", url = "https://download.openmmlab.com/mmcv/dist/cu121/torch2.1.0/mmcv-2.1.0-cp311-cp311-manylinux1_x86_64.whl" },
@@ -478,6 +496,7 @@ source = { editable = "../atria_models" }
 dependencies = [
     { name = "atria-core" },
     { name = "atria-hub" },
+    { name = "atria-metrics" },
     { name = "atria-registry" },
     { name = "atria-transforms" },
     { name = "diffusers" },
@@ -493,6 +512,7 @@ dependencies = [
 requires-dist = [
     { name = "atria-core", extras = ["torch-gpu"], editable = "../atria_core" },
     { name = "atria-hub", extras = ["torch-gpu"], editable = "../atria_hub" },
+    { name = "atria-metrics", editable = "../atria_metrics" },
     { name = "atria-registry", extras = ["torch-gpu"], editable = "../atria_registry" },
     { name = "atria-transforms", editable = "../atria_transforms" },
     { name = "diffusers", specifier = ">=0.34.0" },
@@ -733,6 +753,12 @@ sdist = { url = "https://files.pythonhosted.org/packages/60/6c/8ca2efa64cf75a977
 wheels = [
     { url = "https://files.pythonhosted.org/packages/85/32/10bb5764d90a8eee674e9dc6f4db6a0ab47c8c4d0d83c27f7c39ac415a4d/click-8.2.1-py3-none-any.whl", hash = "sha256:61a3265b914e850b85317d0b3109c7f8cd35a670f963866005d6ef1d5175a12b", size = 102215, upload_time = "2025-05-20T23:19:47.796Z" },
 ]
+
+[[package]]
+name = "codename"
+version = "1.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/c8/44/682d39480678b0d3a07c7c7c08e5c102e4807938ed9d126a77e21be00afd/codename-1.1.tar.gz", hash = "sha256:863780fa47521baa19087015d408b19dac4e93c6eaac4b1cc59a7ea728ea15fd", size = 3493, upload_time = "2018-01-30T13:22:36.71Z" }
 
 [[package]]
 name = "colorama"
@@ -1007,6 +1033,42 @@ wheels = [
 ]
 
 [[package]]
+name = "docile-benchmark"
+version = "0.3.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "click" },
+    { name = "networkx", extra = ["default"] },
+    { name = "pdf2image" },
+    { name = "pillow" },
+    { name = "tabulate" },
+    { name = "tqdm" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/5a/14/de88989fb388098dd1204585a2134342d31e5b36cd63f2666fb6f6d2c0a3/docile_benchmark-0.3.4.tar.gz", hash = "sha256:ee3602b4e182e859c97226a32c7d2664b734ab0905f7671f055c7caa639984e6", size = 81896416, upload_time = "2024-05-15T15:37:55.583Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/fb/bf/27c8de5aef8b6197f584ecc65f577a3b6b998f3b2264c93cdb4cd4c3ef8f/docile_benchmark-0.3.4-py3-none-any.whl", hash = "sha256:3f9137ef12d8eaeb9d0769da0e2527db8ad71acbb7450774edaa361778be11ba", size = 81910168, upload_time = "2024-05-15T15:37:46.92Z" },
+]
+
+[[package]]
+name = "editdistance"
+version = "0.8.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/d5/18/9f4f975ca87a390832b1c22478f3702fcdf739f83211e24d054b7551270d/editdistance-0.8.1.tar.gz", hash = "sha256:d1cdf80a5d5014b0c9126a69a42ce55a457b457f6986ff69ca98e4fe4d2d8fed", size = 50006, upload_time = "2024-02-10T07:44:53.914Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e2/dc/d0c29fd52d8f9e795653ed2b838a2a48c739cdfff04ac5b79c6c0ecbdf79/editdistance-0.8.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:486105603a273d73d12a54f347dffa70ab281749d7c3879658b377bc49e4b98c", size = 106079, upload_time = "2024-02-10T07:43:34.34Z" },
+    { url = "https://files.pythonhosted.org/packages/b4/c6/75fa45d7b78fbea6fd894f4e48895a75bd3c83d4a9a6b57673881d74d3e0/editdistance-0.8.1-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:fad081f5f86a175c1a09a4e9e45b95c9349e454c21e181e842e01c85f1f536fc", size = 80580, upload_time = "2024-02-10T07:43:35.947Z" },
+    { url = "https://files.pythonhosted.org/packages/b7/a3/058d823b6285c3511dc94ed80620c3fb0c18b4aaa708f70ba71f3af28436/editdistance-0.8.1-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:8cb78e125f6759398885a775f5eed07c2bb72b2f86da43e674c6b6a3335b273b", size = 79087, upload_time = "2024-02-10T07:43:36.923Z" },
+    { url = "https://files.pythonhosted.org/packages/a0/3a/0b13c7864c93b1e9b9952bd2a33c5ef3c4fd1bf70a5fad6924789e70e5eb/editdistance-0.8.1-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:3778ca60aa89def9144b70e330bcec5330c7da1d69cb28c612e90b84510a1d3d", size = 409296, upload_time = "2024-02-10T07:43:38.52Z" },
+    { url = "https://files.pythonhosted.org/packages/96/8a/db0fd79e8ddb9b5f86f274107c5d0a27ec4f2af88877df1f26c2c6d150cc/editdistance-0.8.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:fba945eaa0436cf40bc53d7e299dc537c7c71353379a095b7459ff4af910da33", size = 412913, upload_time = "2024-02-10T07:43:39.852Z" },
+    { url = "https://files.pythonhosted.org/packages/0d/d2/98be7112750ff17b436dd76f988f1e38570dcec0df8578ee19ef046f22fe/editdistance-0.8.1-cp311-cp311-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:877f2a0d801f32bc1a1878901ffb947b974361e849c66e314a7f1d786a446b58", size = 407430, upload_time = "2024-02-10T07:43:41.048Z" },
+    { url = "https://files.pythonhosted.org/packages/03/62/1815e3bf164910c47ba1948c8b5e937a40c7f9763b64e98fb6666b01dd06/editdistance-0.8.1-cp311-cp311-musllinux_1_1_aarch64.whl", hash = "sha256:e79d351ca40a6ead5f3763253fd7521572ee0d3e5d42538630e56d10f48db481", size = 909217, upload_time = "2024-02-10T07:43:42.916Z" },
+    { url = "https://files.pythonhosted.org/packages/0c/d3/a832cea7b507a9be54e4ac3d1340fb66dca5f9c16c70bf38d5039e8fdede/editdistance-0.8.1-cp311-cp311-musllinux_1_1_i686.whl", hash = "sha256:70ed382b3052a51161bad0149d4665003bf3b949fce0b01bf1253a4cc1a88239", size = 969407, upload_time = "2024-02-10T07:43:44.912Z" },
+    { url = "https://files.pythonhosted.org/packages/a3/b4/db291d2a3845cbf8047b4b5aad3b3e038a8a2994d87027b40e1a1b0f4b74/editdistance-0.8.1-cp311-cp311-musllinux_1_1_x86_64.whl", hash = "sha256:a529bfb384c4000775d76739c4e64f73337f0f5a3784933b1321b577a62bed4e", size = 922112, upload_time = "2024-02-10T07:43:47.047Z" },
+    { url = "https://files.pythonhosted.org/packages/c4/26/7ddeacada4982d0b892a28897e21871d0f25bca165e3663e37c3a272808a/editdistance-0.8.1-cp311-cp311-win32.whl", hash = "sha256:b082232429e731f181af7f7d2bcf79da6ca8fadd04e9086c11e2973f7d330c81", size = 80799, upload_time = "2024-02-10T07:43:48.231Z" },
+    { url = "https://files.pythonhosted.org/packages/52/a1/778af8590b8b12f03f62eacc3c8744407ade9e3d69be6dabe38d0afbf2dd/editdistance-0.8.1-cp311-cp311-win_amd64.whl", hash = "sha256:cef1a4359252a49f2c4718e64e9d40027d9d951b289d045bdb278656e59f6af8", size = 79698, upload_time = "2024-02-10T07:43:49.234Z" },
+]
+
+[[package]]
 name = "email-validator"
 version = "2.2.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1060,6 +1122,15 @@ sdist = { url = "https://files.pythonhosted.org/packages/0a/10/c23352565a6544bdc
 wheels = [
     { url = "https://files.pythonhosted.org/packages/4d/36/2a115987e2d8c300a974597416d9de88f2444426de9571f4b59b2cca3acc/filelock-3.18.0-py3-none-any.whl", hash = "sha256:c401f4f8377c4464e6db25fff06205fd89bdd83b65eb0488ed1b160f780e21de", size = 16215, upload_time = "2025-03-14T07:11:39.145Z" },
 ]
+
+[[package]]
+name = "fire"
+version = "0.7.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "termcolor" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/6b/b6/82c7e601d6d3c3278c40b7bd35e17e82aa227f050aa9f66cb7b7fce29471/fire-0.7.0.tar.gz", hash = "sha256:961550f07936eaf65ad1dc8360f2b2bf8408fad46abbfa4d2a3794f8d2a95cdf", size = 87189, upload_time = "2024-10-01T14:29:31.585Z" }
 
 [[package]]
 name = "fonttools"
@@ -1634,6 +1705,15 @@ wheels = [
 ]
 
 [[package]]
+name = "lazy-imports"
+version = "1.0.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/b7/18/0a0116bb5a6cf335485e585d427202aa5c11315ccb7f8cac2ced47a3b75d/lazy_imports-1.0.0.tar.gz", hash = "sha256:187ab641d1cf892e65575b3b9d2800c2cae22e0d0541fde91b2d88c9ee9cc006", size = 24330, upload_time = "2025-06-06T18:02:41.677Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a1/3e/4c6d40c466d1399ac42e2b9b516544442ceae23db4c2369220403c0dc6f6/lazy_imports-1.0.0-py3-none-any.whl", hash = "sha256:1e151c74eb3318de63ed0be50bfc1672277e661ee3ce9a124ef6a777b374c328", size = 20420, upload_time = "2025-06-06T18:02:39.656Z" },
+]
+
+[[package]]
 name = "lazy-loader"
 version = "0.4"
 source = { registry = "https://pypi.org/simple" }
@@ -1643,6 +1723,28 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/6f/6b/c875b30a1ba490860c93da4cabf479e03f584eba06fe5963f6f6644653d8/lazy_loader-0.4.tar.gz", hash = "sha256:47c75182589b91a4e1a85a136c074285a5ad4d9f39c63e0d7fb76391c4574cd1", size = 15431, upload_time = "2024-04-05T13:03:12.261Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/83/60/d497a310bde3f01cb805196ac61b7ad6dc5dcf8dce66634dc34364b20b4f/lazy_loader-0.4-py3-none-any.whl", hash = "sha256:342aa8e14d543a154047afb4ba8ef17f5563baad3fc610d7b15b213b0f119efc", size = 12097, upload_time = "2024-04-05T13:03:10.514Z" },
+]
+
+[[package]]
+name = "lxml"
+version = "6.0.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/c5/ed/60eb6fa2923602fba988d9ca7c5cdbd7cf25faa795162ed538b527a35411/lxml-6.0.0.tar.gz", hash = "sha256:032e65120339d44cdc3efc326c9f660f5f7205f3a535c1fdbf898b29ea01fb72", size = 4096938, upload_time = "2025-06-26T16:28:19.373Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7c/23/828d4cc7da96c611ec0ce6147bbcea2fdbde023dc995a165afa512399bbf/lxml-6.0.0-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:4ee56288d0df919e4aac43b539dd0e34bb55d6a12a6562038e8d6f3ed07f9e36", size = 8438217, upload_time = "2025-06-26T16:25:34.349Z" },
+    { url = "https://files.pythonhosted.org/packages/f1/33/5ac521212c5bcb097d573145d54b2b4a3c9766cda88af5a0e91f66037c6e/lxml-6.0.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:b8dd6dd0e9c1992613ccda2bcb74fc9d49159dbe0f0ca4753f37527749885c25", size = 4590317, upload_time = "2025-06-26T16:25:38.103Z" },
+    { url = "https://files.pythonhosted.org/packages/2b/2e/45b7ca8bee304c07f54933c37afe7dd4d39ff61ba2757f519dcc71bc5d44/lxml-6.0.0-cp311-cp311-manylinux2010_i686.manylinux2014_i686.manylinux_2_12_i686.manylinux_2_17_i686.whl", hash = "sha256:d7ae472f74afcc47320238b5dbfd363aba111a525943c8a34a1b657c6be934c3", size = 5221628, upload_time = "2025-06-26T16:25:40.878Z" },
+    { url = "https://files.pythonhosted.org/packages/32/23/526d19f7eb2b85da1f62cffb2556f647b049ebe2a5aa8d4d41b1fb2c7d36/lxml-6.0.0-cp311-cp311-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:5592401cdf3dc682194727c1ddaa8aa0f3ddc57ca64fd03226a430b955eab6f6", size = 4949429, upload_time = "2025-06-28T18:47:20.046Z" },
+    { url = "https://files.pythonhosted.org/packages/ac/cc/f6be27a5c656a43a5344e064d9ae004d4dcb1d3c9d4f323c8189ddfe4d13/lxml-6.0.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:58ffd35bd5425c3c3b9692d078bf7ab851441434531a7e517c4984d5634cd65b", size = 5087909, upload_time = "2025-06-28T18:47:22.834Z" },
+    { url = "https://files.pythonhosted.org/packages/3b/e6/8ec91b5bfbe6972458bc105aeb42088e50e4b23777170404aab5dfb0c62d/lxml-6.0.0-cp311-cp311-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:f720a14aa102a38907c6d5030e3d66b3b680c3e6f6bc95473931ea3c00c59967", size = 5031713, upload_time = "2025-06-26T16:25:43.226Z" },
+    { url = "https://files.pythonhosted.org/packages/33/cf/05e78e613840a40e5be3e40d892c48ad3e475804db23d4bad751b8cadb9b/lxml-6.0.0-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:c2a5e8d207311a0170aca0eb6b160af91adc29ec121832e4ac151a57743a1e1e", size = 5232417, upload_time = "2025-06-26T16:25:46.111Z" },
+    { url = "https://files.pythonhosted.org/packages/ac/8c/6b306b3e35c59d5f0b32e3b9b6b3b0739b32c0dc42a295415ba111e76495/lxml-6.0.0-cp311-cp311-manylinux_2_31_armv7l.whl", hash = "sha256:2dd1cc3ea7e60bfb31ff32cafe07e24839df573a5e7c2d33304082a5019bcd58", size = 4681443, upload_time = "2025-06-26T16:25:48.837Z" },
+    { url = "https://files.pythonhosted.org/packages/59/43/0bd96bece5f7eea14b7220476835a60d2b27f8e9ca99c175f37c085cb154/lxml-6.0.0-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:2cfcf84f1defed7e5798ef4f88aa25fcc52d279be731ce904789aa7ccfb7e8d2", size = 5074542, upload_time = "2025-06-26T16:25:51.65Z" },
+    { url = "https://files.pythonhosted.org/packages/e2/3d/32103036287a8ca012d8518071f8852c68f2b3bfe048cef2a0202eb05910/lxml-6.0.0-cp311-cp311-musllinux_1_2_armv7l.whl", hash = "sha256:a52a4704811e2623b0324a18d41ad4b9fabf43ce5ff99b14e40a520e2190c851", size = 4729471, upload_time = "2025-06-26T16:25:54.571Z" },
+    { url = "https://files.pythonhosted.org/packages/ca/a8/7be5d17df12d637d81854bd8648cd329f29640a61e9a72a3f77add4a311b/lxml-6.0.0-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:c16304bba98f48a28ae10e32a8e75c349dd742c45156f297e16eeb1ba9287a1f", size = 5256285, upload_time = "2025-06-26T16:25:56.997Z" },
+    { url = "https://files.pythonhosted.org/packages/cd/d0/6cb96174c25e0d749932557c8d51d60c6e292c877b46fae616afa23ed31a/lxml-6.0.0-cp311-cp311-win32.whl", hash = "sha256:f8d19565ae3eb956d84da3ef367aa7def14a2735d05bd275cd54c0301f0d0d6c", size = 3612004, upload_time = "2025-06-26T16:25:59.11Z" },
+    { url = "https://files.pythonhosted.org/packages/ca/77/6ad43b165dfc6dead001410adeb45e88597b25185f4479b7ca3b16a5808f/lxml-6.0.0-cp311-cp311-win_amd64.whl", hash = "sha256:b2d71cdefda9424adff9a3607ba5bbfc60ee972d73c21c7e3c19e71037574816", size = 4003470, upload_time = "2025-06-26T16:26:01.655Z" },
+    { url = "https://files.pythonhosted.org/packages/a0/bc/4c50ec0eb14f932a18efc34fc86ee936a66c0eb5f2fe065744a2da8a68b2/lxml-6.0.0-cp311-cp311-win_arm64.whl", hash = "sha256:8a2e76efbf8772add72d002d67a4c3d0958638696f541734304c7f28217a9cab", size = 3682477, upload_time = "2025-06-26T16:26:03.808Z" },
 ]
 
 [[package]]
@@ -1965,11 +2067,19 @@ wheels = [
 
 [[package]]
 name = "networkx"
-version = "3.5"
+version = "2.8.8"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/6c/4f/ccdb8ad3a38e583f214547fd2f7ff1fc160c43a75af88e6aec213404b96a/networkx-3.5.tar.gz", hash = "sha256:d4c6f9cf81f52d69230866796b82afbccdec3db7ae4fbd1b65ea750feed50037", size = 2471065, upload_time = "2025-05-29T11:35:07.804Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/cd/16/c44e8550012735b8f21b3df7f39e8ba5a987fb764ac017ad5f3589735889/networkx-2.8.8.tar.gz", hash = "sha256:230d388117af870fce5647a3c52401fcf753e94720e6ea6b4197a5355648885e", size = 1960828, upload_time = "2022-11-01T20:31:52.02Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/eb/8d/776adee7bbf76365fdd7f2552710282c79a4ead5d2a46408c9043a2b70ba/networkx-3.5-py3-none-any.whl", hash = "sha256:0030d386a9a06dee3565298b4a734b68589749a544acbb6c412dc9e2489ec6ec", size = 2034406, upload_time = "2025-05-29T11:35:04.961Z" },
+    { url = "https://files.pythonhosted.org/packages/42/31/d2f89f1ae42718f8c8a9e440ebe38d7d5fe1e0d9eb9178ce779e365b3ab0/networkx-2.8.8-py3-none-any.whl", hash = "sha256:e435dfa75b1d7195c7b8378c3859f0445cd88c6b0375c181ed66823a9ceb7524", size = 2025192, upload_time = "2022-11-01T20:31:49.035Z" },
+]
+
+[package.optional-dependencies]
+default = [
+    { name = "matplotlib" },
+    { name = "numpy" },
+    { name = "pandas" },
+    { name = "scipy" },
 ]
 
 [[package]]
@@ -2218,6 +2328,18 @@ wheels = [
 ]
 
 [[package]]
+name = "pdf2image"
+version = "1.17.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pillow" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/00/d8/b280f01045555dc257b8153c00dee3bc75830f91a744cd5f84ef3a0a64b1/pdf2image-1.17.0.tar.gz", hash = "sha256:eaa959bc116b420dd7ec415fcae49b98100dda3dd18cd2fdfa86d09f112f6d57", size = 12811, upload_time = "2024-01-07T20:33:01.965Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/62/33/61766ae033518957f877ab246f87ca30a85b778ebaad65b7f74fa7e52988/pdf2image-1.17.0-py3-none-any.whl", hash = "sha256:ecdd58d7afb810dffe21ef2b1bbc057ef434dabbac6c33778a38a3f7744a27e2", size = 11618, upload_time = "2024-01-07T20:32:59.957Z" },
+]
+
+[[package]]
 name = "pexpect"
 version = "4.9.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2378,6 +2500,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/4f/92/692c562be4504c262089e86757a9048739fe1acb4024f92d39615e7bab3f/pyarrow-20.0.0-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:6bb830757103a6cb300a04610e08d9636f0cd223d32f388418ea893a3e655f1c", size = 42916060, upload_time = "2025-04-27T12:29:24.253Z" },
     { url = "https://files.pythonhosted.org/packages/a4/ec/9f5c7e7c828d8e0a3c7ef50ee62eca38a7de2fa6eb1b8fa43685c9414fef/pyarrow-20.0.0-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:96e37f0766ecb4514a899d9a3554fadda770fb57ddf42b63d80f14bc20aa7db3", size = 44547640, upload_time = "2025-04-27T12:29:32.782Z" },
     { url = "https://files.pythonhosted.org/packages/54/96/46613131b4727f10fd2ffa6d0d6f02efcc09a0e7374eff3b5771548aa95b/pyarrow-20.0.0-cp311-cp311-win_amd64.whl", hash = "sha256:3346babb516f4b6fd790da99b98bed9708e3f02e734c84971faccb20736848dc", size = 25781491, upload_time = "2025-04-27T12:29:38.464Z" },
+]
+
+[[package]]
+name = "pyarrow-hotfix"
+version = "0.7"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/d2/ed/c3e8677f7abf3981838c2af7b5ac03e3589b3ef94fcb31d575426abae904/pyarrow_hotfix-0.7.tar.gz", hash = "sha256:59399cd58bdd978b2e42816a4183a55c6472d4e33d183351b6069f11ed42661d", size = 9910, upload_time = "2025-04-25T10:17:06.247Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2e/c3/94ade4906a2f88bc935772f59c934013b4205e773bcb4239db114a6da136/pyarrow_hotfix-0.7-py3-none-any.whl", hash = "sha256:3236f3b5f1260f0e2ac070a55c1a7b339c4bb7267839bd2015e283234e758100", size = 7923, upload_time = "2025-04-25T10:17:05.224Z" },
 ]
 
 [[package]]
@@ -2866,6 +2997,21 @@ wheels = [
 ]
 
 [[package]]
+name = "sacremoses"
+version = "0.1.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "click" },
+    { name = "joblib" },
+    { name = "regex" },
+    { name = "tqdm" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/1d/51/fbdc4af4f6e85d26169e28be3763fe50ddfd0d4bf8b871422b0788dcc4d2/sacremoses-0.1.1.tar.gz", hash = "sha256:b6fd5d3a766b02154ed80b962ddca91e1fd25629c0978c7efba21ebccf663934", size = 883188, upload_time = "2023-10-30T15:56:20.187Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0b/f0/89ee2bc9da434bd78464f288fdb346bc2932f2ee80a90b2a4bbbac262c74/sacremoses-0.1.1-py3-none-any.whl", hash = "sha256:31e04c98b169bfd902144824d191825cd69220cdb4ae4bcf1ec58a7db5587b1a", size = 897476, upload_time = "2023-10-30T15:56:18.121Z" },
+]
+
+[[package]]
 name = "safetensors"
 version = "0.5.3"
 source = { registry = "https://pypi.org/simple" }
@@ -3113,6 +3259,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/83/d3/803453b36afefb7c2bb238361cd4ae6125a569b4db67cd9e79846ba2d68c/sympy-1.14.0.tar.gz", hash = "sha256:d3d3fe8df1e5a0b42f0e7bdf50541697dbe7d23746e894990c030e2b05e72517", size = 7793921, upload_time = "2025-04-27T18:05:01.611Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a2/09/77d55d46fd61b4a135c444fc97158ef34a095e5681d0a6c10b75bf356191/sympy-1.14.0-py3-none-any.whl", hash = "sha256:e091cc3e99d2141a0ba2847328f5479b05d94a6635cb96148ccb3f34671bd8f5", size = 6299353, upload_time = "2025-04-27T18:04:59.103Z" },
+]
+
+[[package]]
+name = "tabulate"
+version = "0.9.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ec/fe/802052aecb21e3797b8f7902564ab6ea0d60ff8ca23952079064155d1ae1/tabulate-0.9.0.tar.gz", hash = "sha256:0095b12bf5966de529c0feb1fa08671671b3368eec77d7ef7ab114be2c068b3c", size = 81090, upload_time = "2022-10-06T17:21:48.54Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/40/44/4a5f08c96eb108af5cb50b41f76142f0afa346dfa99d5296fe7202a11854/tabulate-0.9.0-py3-none-any.whl", hash = "sha256:024ca478df22e9340661486f85298cff5f6dcdba14f3813e8830015b9ed1948f", size = 35252, upload_time = "2022-10-06T17:21:44.262Z" },
 ]
 
 [[package]]
