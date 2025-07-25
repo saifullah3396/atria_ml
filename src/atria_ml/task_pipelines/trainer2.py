@@ -50,6 +50,8 @@ def app() -> None:
     )
 
     # Set the log file path for the logger
+    output_dir = config.get("output_dir")
+    Path(output_dir).mkdir(parents=True, exist_ok=True)
     LoggerBase().log_file_path = Path(config["output_dir"]) / "atria_trainer.log"
 
     # Initialize the Atria Trainer with the provided configuration

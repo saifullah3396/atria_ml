@@ -1,10 +1,15 @@
-from atria_registry.module_registry import ModuleRegistry
-from atria_registry.registry_group import RegistryGroup
-
 _initialized = False
 
 
 def init_registry():
+    from atria_registry.module_registry import ModuleRegistry
+    from atria_registry.registry_group import RegistryGroup
+
+    from atria_ml.registry.registry_groups import (
+        LRSchedulerRegistryGroup,
+        OptimizersRegistryGroup,
+    )
+
     global _initialized
     if _initialized:
         return
@@ -15,14 +20,14 @@ def init_registry():
     )
     ModuleRegistry().add_registry_group(
         name="LR_SCHEDULER",
-        registry_group=RegistryGroup(
-            name="lr_scheduler", is_factory=True, default_provider="atria_ml"
+        registry_group=LRSchedulerRegistryGroup(
+            name="lr_scheduler", default_provider="atria_ml"
         ),
     )
     ModuleRegistry().add_registry_group(
         name="OPTIMIZER",
-        registry_group=RegistryGroup(
-            name="optimizer", is_factory=True, default_provider="atria_ml"
+        registry_group=OptimizersRegistryGroup(
+            name="optimizer", default_provider="atria_ml"
         ),
     )
     ModuleRegistry().add_registry_group(

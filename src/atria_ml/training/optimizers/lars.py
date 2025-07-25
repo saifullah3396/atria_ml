@@ -24,10 +24,7 @@ License: MIT
 import torch
 from torch.optim.optimizer import Optimizer, required
 
-from atria_ml.registry import OPTIMIZER
 
-
-@OPTIMIZER.register("lars")
 class LARS(Optimizer):
     r"""
     Implements Layer-wise Adaptive Rate Scaling (LARS) for SGD.

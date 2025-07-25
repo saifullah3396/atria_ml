@@ -1,5 +1,5 @@
-_target_: torch.optim.adagrad.Adagrad
-_partial_: true
+_target_: atria_ml.registry.registry_groups.OptimizerConfig
+optimizer: torch.optim.Adagrad
 lr: 0.01
 lr_decay: 0
 weight_decay: 0

@@ -1,5 +1,5 @@
-_target_: torch.optim.asgd.ASGD
-_partial_: true
+_target_: atria_ml.registry.registry_groups.OptimizerConfig
+optimizer: torch.optim.ASGD
 lr: 0.01
 lambd: 0.0001
 alpha: 0.75

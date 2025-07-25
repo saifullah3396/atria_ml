@@ -1,5 +1,5 @@
-_target_: torch.optim.rmsprop.RMSprop
-_partial_: true
+_target_: atria_ml.registry.registry_groups.OptimizerConfig
+optimizer: torch.optim.RMSprop
 lr: 0.01
 alpha: 0.99
 eps: 1.0e-08

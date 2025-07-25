@@ -19,15 +19,11 @@ Date: April 14, 2025
 
 from pathlib import Path
 
-from atria_datasets.build_registry import *  # noqa
-from atria_metrics.build_registry import *  # noqa
-from atria_models.build_registry import *  # noqa
 from atria_registry.utilities import write_registry_to_yaml
-from atria_transforms.build_registry import *  # noqa
 
-from atria_ml.task_pipelines._data_visualizer import *  # noqa
-from atria_ml.task_pipelines._evaluator import *  # noqa
-from atria_ml.task_pipelines._inferencer import *  # noqa
+# from atria_ml.task_pipelines._data_visualizer import *  # noqa
+# from atria_ml.task_pipelines._evaluator import *  # noqa
+# from atria_ml.task_pipelines._inferencer import *  # noqa
 from atria_ml.task_pipelines._trainer import *  # noqa
 from atria_ml.training.optimizers.ext_modules import *  # noqa
 from atria_ml.training.optimizers.lars import *  # noqa
@@ -81,6 +77,11 @@ class AtriaConfig:
 
 
 if __name__ == "__main__":
+    import shutil
+
+    config_path = Path(__file__).parent / "conf"
+    if config_path.exists():
+        shutil.rmtree(config_path)
     AtriaConfig.initialize()
     write_registry_to_yaml(
         str(Path(__file__).parent / "conf"),

@@ -9,7 +9,7 @@ from typing import Any
 from atria_ml.registry import LR_SCHEDULER
 
 
-@LR_SCHEDULER.register("polynomial_decay_lr")
+@LR_SCHEDULER.register_callable_scheduler("polynomial_decay_lr")
 def polynomial_decay_lr(
     optimizer: Any, num_training_steps: int, max_decay_steps: int = -1
 ):

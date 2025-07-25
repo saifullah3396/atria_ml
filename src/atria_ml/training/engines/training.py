@@ -32,6 +32,7 @@ from typing import TYPE_CHECKING, Any, Optional, Union, cast
 from atria_core.logger.logger import get_logger
 
 from atria_ml.registry import ENGINE
+from atria_ml.registry.registry_groups import OptimizerConfig, SchedulerConfig
 from atria_ml.training.configs.early_stopping_config import EarlyStoppingConfig
 from atria_ml.training.configs.gradient_config import GradientConfig
 from atria_ml.training.configs.logging_config import LoggingConfig
@@ -42,7 +43,6 @@ from atria_ml.training.engines.atria_engine import AtriaEngine
 from atria_ml.training.engines.engine_steps.training import TrainingStep
 from atria_ml.training.engines.evaluation import ValidationEngine, VisualizationEngine
 from atria_ml.training.engines.utilities import RunConfig
-from atria_ml.training.schedulers.typing import LRSchedulerType, OptimizerType
 
 if TYPE_CHECKING:
     import torch
@@ -59,8 +59,8 @@ logger = get_logger(__name__)
     "default_training_engine",
     hydra_defaults=[
         "_self_",
-        {"/optimizer_factory@optimizer_factory": "adam"},
-        {"/lr_scheduler_factory@lr_scheduler_factory": "cosine_annealing_lr"},
+        {"/optimizer@optimizer": "adam"},
+        {"/lr_scheduler@lr_scheduler": "cosine_annealing_lr"},
     ],
 )
 class TrainingEngine(AtriaEngine):
@@ -73,8 +73,8 @@ class TrainingEngine(AtriaEngine):
 
     Attributes:
         _REGISTRY_CONFIGS (ClassVar[Type[dict]]): Registry configurations for the training engine.
-        _optimizer_factory (OptimizerType): Factory for creating optimizers.
-        _lr_scheduler_factory (Optional[LRSchedulerType]): Factory for creating learning rate schedulers.
+        _optimizer (OptimizerType): Factory for creating optimizers.
+        _lr_scheduler (Optional[LRSchedulerType]): Factory for creating learning rate schedulers.
         _eval_training (Optional[bool]): Flag to enable evaluation during training.
         _stop_on_nan (bool): Flag to stop training if NaN values are encountered.
         _clear_cuda_cache (Optional[bool]): Flag to clear CUDA cache during training.
@@ -113,8 +113,8 @@ class TrainingEngine(AtriaEngine):
 
     def __init__(
         self,
-        optimizer_factory: OptimizerType,
-        lr_scheduler_factory: LRSchedulerType | None = None,
+        optimizer: OptimizerConfig,
+        lr_scheduler: SchedulerConfig | None = None,
         max_epochs: int = 100,
         epoch_length: int | None = None,
         outputs_to_running_avg: list[str] | None = None,
@@ -138,8 +138,8 @@ class TrainingEngine(AtriaEngine):
 
         Args:
             engine_step (TrainingStep): The training step to be executed.
-            optimizer_factory (OptimizerType): Factory for creating optimizers.
-            lr_scheduler_factory (Optional[LRSchedulerType]): Factory for creating learning rate schedulers.
+            optimizer (OptimizerType): Factory for creating optimizers.
+            lr_scheduler (Optional[LRSchedulerType]): Factory for creating learning rate schedulers.
             max_epochs (int): Maximum number of epochs for training.
             epoch_length (Optional[int]): Length of each epoch.
             outputs_to_running_avg (Optional[List[str]]): Outputs to compute running averages.
@@ -159,8 +159,8 @@ class TrainingEngine(AtriaEngine):
             grad_scaler (Optional[torch.cuda.amp.GradScaler]): GradScaler for mixed precision training.
             with_amp (bool): Flag to enable automatic mixed precision (AMP) training.
         """
-        self._optimizer_factory = optimizer_factory
-        self._lr_scheduler_factory = lr_scheduler_factory
+        self._optimizer = optimizer
+        self._lr_scheduler = lr_scheduler
         self._eval_training = eval_training
         self._stop_on_nan = stop_on_nan
         self._clear_cuda_cache = clear_cuda_cache
@@ -279,19 +279,17 @@ class TrainingEngine(AtriaEngine):
         self._visualization_engine = visualization_engine
 
         # convert optimizers to dict if not already
-        if not isinstance(self._optimizer_factory, dict):
-            self._optimizer_factory = {
-                _DEFAULT_OPTIMIZER_PARAMETERS_KEY: self._optimizer_factory
-            }
+        if not isinstance(self._optimizer, dict):
+            self._optimizer = {_DEFAULT_OPTIMIZER_PARAMETERS_KEY: self._optimizer}
 
         optimized_parameters_dict = self._model_pipeline.optimizer_parameters()
-        assert len(optimized_parameters_dict) == len(self._optimizer_factory), (
+        assert len(optimized_parameters_dict) == len(self._optimizer), (
             "Number of optimizers must match the number of model parameter groups defined in the task_module. "
-            f"Optimizers: {len(self._optimizer_factory)} != Model parameter groups: {len(optimized_parameters_dict)}"
+            f"Optimizers: {len(self._optimizer)} != Model parameter groups: {len(optimized_parameters_dict)}"
         )
 
         self._optimizers = {}
-        for k, opt in self._optimizer_factory.items():
+        for k, opt in self._optimizer.items():
             _validate_partial_class(opt, torch.optim.Optimizer, f"[{k}] optimizer")
             if k not in optimized_parameters_dict.keys():
                 raise ValueError(
@@ -309,14 +307,14 @@ class TrainingEngine(AtriaEngine):
 
         # initialize lr schedulers partials
         self._lr_schedulers = {}
-        if self._lr_scheduler_factory is not None:
+        if self._lr_scheduler is not None:
             # convert lr_schedulers to dict if not already
-            if not isinstance(self._lr_scheduler_factory, dict):
-                self._lr_scheduler_factory = {
-                    _DEFAULT_OPTIMIZER_PARAMETERS_KEY: self._lr_scheduler_factory
+            if not isinstance(self._lr_scheduler, dict):
+                self._lr_scheduler = {
+                    _DEFAULT_OPTIMIZER_PARAMETERS_KEY: self._lr_scheduler
                 }
 
-            for k, sch in self._lr_scheduler_factory.items():
+            for k, sch in self._lr_scheduler.items():
                 _validate_partial_class(
                     sch,
                     (torch.optim.lr_scheduler.LRScheduler, LRScheduler),

@@ -16,34 +16,20 @@ License: MIT
 
 from atria_ml.registry import OPTIMIZER
 
-OPTIMIZER.register_modules(
-    module_paths=[
-        f"torch.optim.{x}"
-        for x in [
-            "Adadelta",
-            "Adam",
-            "AdamW",
-            "SparseAdam",
-            "Adagrad",
-            "Adamax",
-            "ASGD",
-            "LBFGS",
-            "RMSprop",
-            "Rprop",
-            "SGD",
-        ]
-    ],
-    module_names=[
-        "adadelta",
-        "adam",
-        "adamw",
-        "sparse_adam",
-        "adagrad",
-        "adamax",
-        "asgd",
-        "lbfgs",
-        "rmsprop",
-        "rprop",
-        "sgd",
-    ],
-)
+for optimizer_name, optimizer_path in [
+    ("adadelta", "torch.optim.Adadelta"),
+    ("adam", "torch.optim.Adam"),
+    ("adamw", "torch.optim.AdamW"),
+    ("sparse_adam", "torch.optim.SparseAdam"),
+    ("adagrad", "torch.optim.Adagrad"),
+    ("adamax", "torch.optim.Adamax"),
+    ("asgd", "torch.optim.ASGD"),
+    ("lbfgs", "torch.optim.LBFGS"),
+    ("rmsprop", "torch.optim.RMSprop"),
+    ("rprop", "torch.optim.Rprop"),
+    ("sgd", "torch.optim.SGD"),
+    ("lars", "atria_ml.training.optimizers.lars.LARS"),
+]:
+    OPTIMIZER.register_optimizer(
+        optimizer_path=optimizer_path, optimizer_name=optimizer_name
+    )

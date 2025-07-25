@@ -1,5 +1,7 @@
-_target_: torch.optim.lr_scheduler.CyclicLR
-_partial_: true
+_target_: atria_ml.registry.registry_groups.SchedulerConfig
+scheduler: torch.optim.lr_scheduler.CyclicLR
+base_lr: ???
+max_lr: ???
 step_size_up: 2000
 step_size_down: null
 mode: triangular

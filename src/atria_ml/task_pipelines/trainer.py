@@ -14,7 +14,6 @@ logger = get_logger(__name__)
 def initialize_and_run(
     local_rank: int, config: DictConfig, hydra_config: DictConfig
 ) -> None:
-    import ignite.distributed as idist
     from atria_core.utilities.pydantic import pydantic_parser
     from hydra_zen import instantiate
 
@@ -25,10 +24,12 @@ def initialize_and_run(
     LoggerBase().log_file_path = (
         Path(hydra_config.runtime.output_dir) / f"{hydra_config.job.name}.log"
     )
-    LoggerBase().rank = idist.get_rank()
+    LoggerBase().rank = local_rank
     config.output_dir = hydra_config.runtime.output_dir
     config._zen_exclude.append("package")  # exclude atria base config args
     config._zen_exclude.append("version")  # exclude atria base config args
+
+    logger.info("Initializing Atria Trainer with config: %s", config)
     atria_trainer: Trainer = instantiate(
         config, _convert_="object", _target_wrapper_=pydantic_parser
     )
@@ -38,10 +39,10 @@ def initialize_and_run(
 
 @hydra.main(version_base=None, config_path="../conf", config_name="__atria__")
 def app(config: DictConfig) -> None:
-    import ignite.distributed as idist
-
     hydra_config = HydraConfig.get()
     if config.n_devices > 1:
+        import ignite.distributed as idist
+
         # we run the torch distributed environment with spawn if we have all the gpus on the same script
         # such as when we set --gpus-per-task=N
         ntasks = int(os.environ["SLURM_NTASKS"]) if "SLURM_JOBID" in os.environ else 1

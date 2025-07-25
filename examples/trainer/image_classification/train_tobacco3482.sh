@@ -26,12 +26,10 @@ export PYTHONPATH="$PROJECT_ROOT/src"
 
 # task_pipeline=trainer/image_classification \
 python \
-    -m atria_ml.task_pipelines.trainer \
-    task_pipeline=trainer/image_classification \
-    dataset@data_pipeline.dataset=cifar10/default \
+    -m atria_ml.task_pipelines.trainer2 \
+    dataset@data_pipeline.dataset=tobacco3482/default \
     model_pipeline.model.model_name=resnet18 \
     data_pipeline.dataloader_config.train_batch_size=256 \
-    data_pipeline.dataloader_config.eval_batch_size=256 \
     data_pipeline.dataloader_config.num_workers=8 \
-    experiment_name=train_cifar10_resnet50 \
+    experiment_name=train_tobacco3482_resnet50 \
     $@

@@ -1,0 +1,6 @@
+_target_: atria_ml.registry.registry_groups.SchedulerConfig
+scheduler: torch.optim.lr_scheduler.MultiStepLR
+milestones: ???
+gamma: 0.1
+last_epoch: -1
+verbose: false

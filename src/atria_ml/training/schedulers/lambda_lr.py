@@ -19,7 +19,7 @@ from typing import Any
 from atria_ml.registry import LR_SCHEDULER
 
 
-@LR_SCHEDULER.register("lambda_lr")
+@LR_SCHEDULER.register_callable_scheduler("lambda_lr")
 def lambda_lr(
     optimizer: Any,
     num_training_steps: int,

@@ -158,6 +158,7 @@ dev = [
     "pytest>=8.4.1",
     "ruff>=0.12.2",
     "ipykernel>=6.28.1",
+    "tuna>=0.5.11",
 ]
 torch-cpu = [
   "torch==2.1.2",

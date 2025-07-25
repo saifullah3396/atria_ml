@@ -1,8 +1,8 @@
-from typing import ClassVar
-
 from atria_core.logger import get_logger
+from atria_core.types import TaskType
 from atria_datasets.pipelines.atria_data_pipeline import AtriaDataPipeline
 from atria_models.pipelines.atria_model_pipeline import AtriaModelPipeline
+from atria_registry.registry_config import RegistryConfig
 
 from atria_ml.registry import TASK_PIPELINE
 from atria_ml.training.engines.evaluation import (
@@ -15,126 +15,114 @@ from atria_ml.training.engines.utilities import RunConfig
 
 logger = get_logger(__name__)
 
+DEFAULTS_SELF = ["_self_"]
+DATA_PIPELINE_DEFAULT_LIST = [{"/data_pipeline@data_pipeline": "default"}]
+MODEL_DEFAULT_LIST = [{"/model_pipeline@model_pipeline": "???"}]
+ENGINE_DEFAULT_LIST = [
+    {"/engine@training_engine": "default_training_engine"},
+    {"/engine@validation_engine": "default_validation_engine"},
+    {"/engine@test_engine": "default_test_engine"},
+    {"/engine@visualization_engine": "default_visualization_engine"},
+]
+OPTIMIZER_DEFAULT_LIST = [
+    {"override /optimizer@training_engine.optimizer": "adamw"},
+    {"override /lr_scheduler@training_engine.lr_scheduler": "cosine_annealing_lr"},
+]
+
 
 @TASK_PIPELINE.register(
     "trainer",
-    zen_meta={"n_devices": 1, "backend": "nccl", "experiment_name": ""},
+    configs=[
+        RegistryConfig(
+            name="default",
+            defaults=DEFAULTS_SELF
+            + ENGINE_DEFAULT_LIST
+            + OPTIMIZER_DEFAULT_LIST
+            + DATA_PIPELINE_DEFAULT_LIST
+            + MODEL_DEFAULT_LIST,
+            output_dir="outputs/trainer/${resolve_experiment_name:${experiment_name}}",
+        ),
+        RegistryConfig(
+            name=TaskType.image_classification.value,
+            defaults=DEFAULTS_SELF
+            + ENGINE_DEFAULT_LIST
+            + OPTIMIZER_DEFAULT_LIST
+            + DATA_PIPELINE_DEFAULT_LIST
+            + [{"/model_pipeline@model_pipeline": "image_classification"}],
+            output_dir="outputs/trainer/image_classification/${resolve_experiment_name:${experiment_name}}/",
+        ),
+        RegistryConfig(
+            name=TaskType.sequence_classification.value,
+            defaults=DEFAULTS_SELF
+            + ENGINE_DEFAULT_LIST
+            + OPTIMIZER_DEFAULT_LIST
+            + DATA_PIPELINE_DEFAULT_LIST
+            + [{"/model_pipeline@model_pipeline": "sequence_classification"}],
+            output_dir="outputs/trainer/sequence_classification/${resolve_experiment_name:${experiment_name}}/",
+        ),
+        RegistryConfig(
+            name=TaskType.semantic_entity_recognition.value,
+            defaults=DEFAULTS_SELF
+            + ENGINE_DEFAULT_LIST
+            + OPTIMIZER_DEFAULT_LIST
+            + DATA_PIPELINE_DEFAULT_LIST
+            + [{"/model_pipeline@model_pipeline": "token_classification"}],
+            output_dir="outputs/trainer/semantic_entity_recognition/${resolve_experiment_name:${experiment_name}}/",
+        ),
+        RegistryConfig(
+            name=TaskType.layout_entity_recognition.value,
+            defaults=DEFAULTS_SELF
+            + ENGINE_DEFAULT_LIST
+            + OPTIMIZER_DEFAULT_LIST
+            + DATA_PIPELINE_DEFAULT_LIST
+            + [{"/model_pipeline@model_pipeline": "layout_token_classification"}],
+            output_dir="outputs/trainer/layout_entity_recognition/${resolve_experiment_name:${experiment_name}}/",
+        ),
+        RegistryConfig(
+            name=TaskType.visual_question_answering.value,
+            defaults=DEFAULTS_SELF
+            + ENGINE_DEFAULT_LIST
+            + OPTIMIZER_DEFAULT_LIST
+            + DATA_PIPELINE_DEFAULT_LIST
+            + [{"/model_pipeline@model_pipeline": "visual_question_answering"}],
+            output_dir="outputs/trainer/visual_question_answering/${resolve_experiment_name:${experiment_name}}/",
+        ),
+        RegistryConfig(
+            name=TaskType.layout_analysis.value,
+            defaults=DEFAULTS_SELF
+            + DATA_PIPELINE_DEFAULT_LIST
+            + ENGINE_DEFAULT_LIST
+            + [
+                {"/model_pipeline@model_pipeline": "object_detection"},
+                {"override /optimizer@training_engine.optimizer": "sgd"},
+                {
+                    "override /lr_scheduler@training_engine.lr_scheduler": "multi_step_lr"
+                },
+            ],
+            output_dir="outputs/trainer/layout_analysis/${resolve_experiment_name:${experiment_name}}/",
+            data_pipeline={"collate_fn": "mmdet_pseudo_collate"},
+            training_engine={
+                "model_checkpoint_config": {"monitored_metric": None},
+                "optimizer": {"lr": 0.02, "weight_decay": 0.0001, "momentum": 0.9},
+                "lr_scheduler": {"milestones": [16, 22], "gamma": 0.1},
+                "warmup_config": {"warmup_ratio": 0.0, "warmup_steps": 500},
+            },
+            do_visualization=True,
+            visualization_engine={
+                "visualize_every_n_epochs": 10,
+                "visualize_on_start": False,
+            },
+            validation_engine={
+                "validate_every_n_epochs": 10,
+                "validate_on_start": False,
+            },
+        ),
+    ],
+    zen_meta={"n_devices": 1, "backend": "nccl", "experiment_name": "_to_be_resolved_"},
     zen_exclude=["hydra", "package", "version"],
     is_global_package=True,
 )
 class Trainer:
-    _REGISTRY_CONFIGS: ClassVar[dict] = {
-        "default": {
-            "hydra_defaults": [
-                {"/data_pipeline@data_pipeline": "default"},
-                {"/engine@training_engine": "default_training_engine"},
-                {"/engine@validation_engine": "default_validation_engine"},
-                {"/engine@test_engine": "default_test_engine"},
-                {"/engine@visualization_engine": "default_visualization_engine"},
-                "_self_",
-            ],
-            "output_dir": "outputs/trainer/image_classification/${resolve_experiment_name:${experiment_name}}",
-        },
-        "image_classification": {
-            "hydra_defaults": [
-                {"/data_pipeline@data_pipeline": "default"},
-                {"/model_pipeline@model_pipeline": "image_classification"},
-                {"/engine@training_engine": "default_training_engine"},
-                {"/engine@validation_engine": "default_validation_engine"},
-                {"/engine@test_engine": "default_test_engine"},
-                {"/engine@visualization_engine": "default_visualization_engine"},
-                "_self_",
-            ],
-            "output_dir": "outputs/trainer/image_classification/${resolve_experiment_name:${experiment_name}}/",
-        },
-        "sequence_classification": {
-            "hydra_defaults": [
-                {"/data_pipeline@data_pipeline": "default"},
-                {"/model_pipeline@model_pipeline": "sequence_classification"},
-                {"/engine@training_engine": "default_training_engine"},
-                {"/engine@validation_engine": "default_validation_engine"},
-                {"/engine@test_engine": "default_test_engine"},
-                {"/engine@visualization_engine": "default_visualization_engine"},
-                "_self_",
-            ],
-            "output_dir": "outputs/trainer/sequence_classification/${resolve_experiment_name:${experiment_name}}/",
-        },
-        "semantic_entity_recognition": {
-            "hydra_defaults": [
-                {"/data_pipeline@data_pipeline": "default"},
-                {"/model_pipeline@model_pipeline": "token_classification"},
-                {"/engine@training_engine": "default_training_engine"},
-                {"/engine@validation_engine": "default_validation_engine"},
-                {"/engine@test_engine": "default_test_engine"},
-                {"/engine@visualization_engine": "default_visualization_engine"},
-                "_self_",
-            ],
-            "output_dir": "outputs/trainer/semantic_entity_recognition/${resolve_experiment_name:${experiment_name}}/",
-        },
-        "layout_entity_recognition": {
-            "hydra_defaults": [
-                {"/data_pipeline@data_pipeline": "default"},
-                {"/model_pipeline@model_pipeline": "layout_token_classification"},
-                {"/engine@training_engine": "default_training_engine"},
-                {"/engine@validation_engine": "default_validation_engine"},
-                {"/engine@test_engine": "default_test_engine"},
-                {"/engine@visualization_engine": "default_visualization_engine"},
-                "_self_",
-            ],
-            "output_dir": "outputs/trainer/layout_entity_recognition/${resolve_experiment_name:${experiment_name}}/",
-        },
-        "visual_question_answering": {
-            "hydra_defaults": [
-                {"/data_pipeline@data_pipeline": "default"},
-                {"/model_pipeline@model_pipeline": "question_answering"},
-                {"/engine@training_engine": "default_training_engine"},
-                {"/engine@validation_engine": "default_validation_engine"},
-                {"/engine@test_engine": "default_test_engine"},
-                {"/engine@visualization_engine": "default_visualization_engine"},
-                "_self_",
-            ],
-            "output_dir": "outputs/trainer/visual_question_answering/${resolve_experiment_name:${experiment_name}}/",
-        },
-        "layout_analysis": {
-            "hydra_defaults": [
-                {"/data_pipeline@data_pipeline": "default"},
-                {"/model_pipeline@model_pipeline": "object_detection"},
-                {"/engine@training_engine": "default_training_engine"},
-                {"/engine@validation_engine": "default_validation_engine"},
-                {"/engine@test_engine": "default_test_engine"},
-                {"/engine@visualization_engine": "default_visualization_engine"},
-                {
-                    "override /optimizer_factory@training_engine.optimizer_factory": "sgd"
-                },
-                {
-                    "override /lr_scheduler_factory@training_engine.lr_scheduler_factory": "multi_step_lr"
-                },
-                "_self_",
-            ],
-            "data_pipeline": {"collate_fn": "mmdet_pseudo_collate"},
-            "training_engine": {
-                "model_checkpoint_config": {"monitored_metric": None},
-                "optimizer_factory": {
-                    "lr": 0.02,
-                    "weight_decay": 0.0001,
-                    "momentum": 0.9,
-                },
-                "lr_scheduler_factory": {"milestones": [16, 22], "gamma": 0.1},
-                "warmup_config": {"warmup_ratio": 0.0, "warmup_steps": 500},
-            },
-            "output_dir": "outputs/trainer/layout_analysis/${resolve_experiment_name:${experiment_name}}/",
-            "do_visualization": True,
-            "visualization_engine": {
-                "visualize_every_n_epochs": 10,
-                "visualize_on_start": False,
-            },
-            "validation_engine": {
-                "validate_every_n_epochs": 10,
-                "validate_on_start": False,
-            },
-        },
-    }
-
     def __init__(
         self,
         data_pipeline: AtriaDataPipeline,
@@ -227,6 +215,7 @@ class Trainer:
         self._device = idist.device()
 
     def _setup_logging(self) -> None:
+        logger.info("Setting up logging...")
         import logging
 
         from atria_ml.training.utilities.torch_utils import _setup_tensorboard
@@ -241,25 +230,19 @@ class Trainer:
         self._tb_logger = _setup_tensorboard(self._output_dir)
 
     def _build_data_pipeline(self):
-        from atria_core.utilities.common import _msg_with_separator
-
         # build data module
-        logger.info(_msg_with_separator("Setting up data pipeline"))
-        self._data_pipeline._runtime_transforms = (
-            self._model_pipeline._runtime_transforms
+        logger.info("Setting up data pipeline")
+        self._data_pipeline.build(
+            runtime_transforms=self._model_pipeline.config.runtime_transforms
         )
-        self._data_pipeline.build()
 
     def _build_model_pipeline(self) -> None:
-        from atria_core.utilities.common import _msg_with_separator
-
         # initialize the task module from partial
-        logger.info(_msg_with_separator("Setting up task module"))
+        logger.info("Setting up task module")
         self._model_pipeline = self._model_pipeline.build(
             dataset_metadata=self._data_pipeline.dataset_metadata,
             tb_logger=self._tb_logger,
         )
-        print(self._model_pipeline)
 
     def _build_dataloaders(self) -> None:
         logger.info("Initializing train dataloader.")
@@ -291,10 +274,8 @@ class Trainer:
         self._test_dataloader = self._data_pipeline.test_dataloader()
 
     def _build_training_engine(self) -> None:
-        from atria_core.utilities.common import _msg_with_separator
-
         if self._validation_engine is not None:
-            logger.info(_msg_with_separator("Setting up validation engine"))
+            logger.info("Setting up validation engine")
             self._validation_engine = self._validation_engine.build(
                 output_dir=self._output_dir,
                 model_pipeline=self._model_pipeline,
@@ -304,7 +285,7 @@ class Trainer:
             )
 
         if self._visualization_engine is not None:
-            logger.info(_msg_with_separator("Setting up visualization engine"))
+            logger.info("Setting up visualization engine")
             self._visualization_engine = self._visualization_engine.build(
                 output_dir=self._output_dir,
                 model_pipeline=self._model_pipeline,
@@ -315,7 +296,7 @@ class Trainer:
 
         # initilize the test engine from partial
         if self._training_engine is not None:
-            logger.info(_msg_with_separator("Setting up training engine"))
+            logger.info("Setting up training engine")
             self._training_engine = self._training_engine.build(
                 run_config=self._run_config,
                 output_dir=self._output_dir,
@@ -328,10 +309,8 @@ class Trainer:
             )
 
     def _build_test_engine(self) -> None:
-        from atria_core.utilities.common import _msg_with_separator
-
         if self._test_engine is not None:
-            logger.info(_msg_with_separator("Setting up test engine"))
+            logger.info("Setting up test engine")
             self._test_engine = self._test_engine.build(
                 output_dir=self._output_dir,
                 model_pipeline=self._model_pipeline,

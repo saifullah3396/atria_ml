@@ -1,5 +1,5 @@
-_target_: torch.optim.adamax.Adamax
-_partial_: true
+_target_: atria_ml.registry.registry_groups.OptimizerConfig
+optimizer: torch.optim.Adamax
 lr: 0.002
 betas:
 - 0.9

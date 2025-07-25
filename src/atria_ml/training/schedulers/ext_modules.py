@@ -16,29 +16,13 @@ Functionality:
 from atria_ml.registry import LR_SCHEDULER
 
 # Register PyTorch learning rate schedulers
-LR_SCHEDULER.register_modules(
-    module_paths=[
-        f"torch.optim.lr_scheduler.{x}"
-        for x in ["StepLR", "MultiStepLR", "ExponentialLR", "CyclicLR"]
-    ],
-    module_names=["step_lr", "multi_step_lr", "exponential_lr", "cyclic_lr"],
-)
-"""
-Registers the following PyTorch learning rate schedulers:
-
-- StepLR: Decays the learning rate of each parameter group by a factor of gamma every step_size epochs.
-- MultiStepLR: Decays the learning rate of each parameter group by gamma once the number of epoch reaches one of the milestones.
-- ExponentialLR: Decays the learning rate of each parameter group by gamma every epoch.
-- CyclicLR: Cycles the learning rate between two boundaries with a constant frequency.
-"""
-
-# Register Ignite learning rate scheduler
-LR_SCHEDULER.register_modules(
-    module_paths="ignite.handlers.ReduceLROnPlateauScheduler",
-    module_names="reduce_lr_on_plateau",
-)
-"""
-Registers the following Ignite learning rate scheduler:
-
-- ReduceLROnPlateauScheduler: Reduces the learning rate when a metric has stopped improving.
-"""
+for scheduler_name, scheduler_path in [
+    ("step_lr", "torch.optim.lr_scheduler.StepLR"),
+    ("multi_step_lr", "torch.optim.lr_scheduler.MultiStepLR"),
+    ("exponential_lr", "torch.optim.lr_scheduler.ExponentialLR"),
+    ("cyclic_lr", "torch.optim.lr_scheduler.CyclicLR"),
+    ("reduce_lr_on_plateau", "ignite.handlers.ReduceLROnPlateauScheduler"),
+]:
+    LR_SCHEDULER.register_scheduler(
+        scheduler_path=scheduler_path, scheduler_name=scheduler_name
+    )

@@ -1,5 +1,5 @@
-_target_: torch.optim.rprop.Rprop
-_partial_: true
+_target_: atria_ml.registry.registry_groups.OptimizerConfig
+optimizer: torch.optim.Rprop
 lr: 0.01
 etas:
 - 0.5

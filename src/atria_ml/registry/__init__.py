@@ -35,12 +35,16 @@ from atria_registry.module_registry import ModuleRegistry
 from atria_registry.registry_group import RegistryGroup
 
 from atria_ml.registry.module_registry import init_registry
+from atria_ml.registry.registry_groups import (
+    LRSchedulerRegistryGroup,
+    OptimizersRegistryGroup,
+)
 
 init_registry()
 
 TASK_PIPELINE: RegistryGroup = ModuleRegistry().TASK_PIPELINE
-LR_SCHEDULER: RegistryGroup = ModuleRegistry().LR_SCHEDULER
-OPTIMIZER: RegistryGroup = ModuleRegistry().OPTIMIZER
+LR_SCHEDULER: LRSchedulerRegistryGroup = ModuleRegistry().LR_SCHEDULER
+OPTIMIZER: OptimizersRegistryGroup = ModuleRegistry().OPTIMIZER
 ENGINE: RegistryGroup = ModuleRegistry().ENGINE
 
 

@@ -1,5 +1,4 @@
 _target_: atria_ml.training.engines.evaluation.FeatureExtractorEngine
-_partial_: false
 engine_step: ???
 features_key: ???
 cache_file_name: ???
