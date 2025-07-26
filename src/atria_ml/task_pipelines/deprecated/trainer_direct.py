@@ -56,7 +56,7 @@ def app() -> None:
 
     # Initialize the Atria Trainer with the provided configuration
     atria_trainer: Trainer
-    atria_trainer.build(run_config=RunConfig(data=config))
+    atria_trainer.build(local_rank=0, run_config=RunConfig(data=config))
     return atria_trainer.run()
 
     # try:

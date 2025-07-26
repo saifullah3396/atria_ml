@@ -1,5 +1,4 @@
-_target_: atria_ml.registry.registry_groups.OptimizerConfig
-optimizer: torch.optim.SGD
+_partial_: false
 lr: ???
 momentum: 0
 dampening: 0
@@ -8,3 +7,5 @@ nesterov: false
 maximize: false
 foreach: null
 differentiable: false
+module: torch.optim.sgd.SGD
+_target_: atria_ml.registry.registry_groups.OptimizerBuilder

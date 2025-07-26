@@ -30,6 +30,8 @@ dependencies = [
     "torchinfo>=1.8.0",
     "h5py>=3.14.0",
     "codename>=1.1",
+    "tensorboard>=2.20.0",
+    "pyqt5>=5.15.11",
 ]
 
 

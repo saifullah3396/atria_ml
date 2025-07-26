@@ -1,7 +1,7 @@
-_target_: atria_ml.registry.registry_groups.SchedulerConfig
-scheduler: ignite.handlers.ReduceLROnPlateauScheduler
+_partial_: false
 metric_name: ???
 trainer: null
 save_history: false
 param_group_index: null
-scheduler_kwargs: ???
+module: ignite.handlers.param_scheduler.ReduceLROnPlateauScheduler
+_target_: atria_ml.registry.registry_groups.LRSchedulerBuilder

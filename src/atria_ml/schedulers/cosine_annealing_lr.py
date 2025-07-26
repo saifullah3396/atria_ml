@@ -18,7 +18,7 @@ from typing import Any
 from atria_ml.registry import LR_SCHEDULER
 
 
-@LR_SCHEDULER.register_callable_scheduler("cosine_annealing_lr")
+@LR_SCHEDULER.register("cosine_annealing_lr")
 def cosine_annealing_lr(
     optimizer: Any,
     total_update_steps: int,

@@ -1,12 +1,21 @@
 # @package __global__
 _target_: hydra_zen.funcs.zen_processing
 _zen_target: atria_ml.task_pipelines._trainer.Trainer
+_zen_partial: false
 _zen_exclude:
 - n_devices
 - backend
 - experiment_name
-model_pipeline: ???
-test_engine: ???
+defaults:
+- /data_pipeline@data_pipeline: default
+- /engine@training_engine: default_training_engine
+- /engine@validation_engine: default_validation_engine
+- /engine@test_engine: default_test_engine
+- /engine@visualization_engine: default_visualization_engine
+- /model_pipeline@model_pipeline: object_detection
+- override /optimizer@training_engine.optimizer: sgd
+- override /lr_scheduler@training_engine.lr_scheduler: multi_step_lr
+- _self_
 data_pipeline:
   collate_fn: mmdet_pseudo_collate
 training_engine:
@@ -38,16 +47,7 @@ do_validation: true
 do_visualization: true
 do_test: true
 vis_batch_size: 64
+test_run: false
 n_devices: 1
 backend: nccl
 experiment_name: _to_be_resolved_
-defaults:
-- /data_pipeline@data_pipeline: default
-- /engine@training_engine: default_training_engine
-- /engine@validation_engine: default_validation_engine
-- /engine@test_engine: default_test_engine
-- /engine@visualization_engine: default_visualization_engine
-- /model_pipeline@model_pipeline: object_detection
-- override /optimizer@training_engine.optimizer: sgd
-- override /lr_scheduler@training_engine.lr_scheduler: multi_step_lr
-- _self_

@@ -25,9 +25,11 @@ Version: 1.0.0
 License: MIT
 """
 
+from __future__ import annotations
+
 from collections.abc import Iterator
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING
 
 from atria_core.logger.logger import get_logger
 
@@ -131,7 +133,7 @@ class ValidationEngine(AtriaEngine):
             test_run=self._test_run,
         )
 
-    def _configure_engine(self, engine: "Engine"):
+    def _configure_engine(self, engine: Engine) -> Engine:
         """
         Configure the validation engine.
 
@@ -144,8 +146,9 @@ class ValidationEngine(AtriaEngine):
         self._configure_progress_bar(engine=engine)
         self._configure_tb_logger(engine=engine)
         self._attach_event_handlers(engine=engine)
+        return engine
 
-    def _configure_tb_logger(self, engine: "Engine"):
+    def _configure_tb_logger(self, engine: Engine):
         """
         Configure TensorBoard logger for validation engine.
 
@@ -173,7 +176,7 @@ class ValidationEngine(AtriaEngine):
                 global_step_transform=global_step_from_engine(self._parent_engine),
             )
 
-    def _initialize_ignite_engine(self) -> "Engine":
+    def _initialize_ignite_engine(self) -> Engine:
         """
         Initialize the validation engine.
 
@@ -185,9 +188,9 @@ class ValidationEngine(AtriaEngine):
 
     def attach_to_engine(
         self,
-        parent_engine: "Engine",
+        parent_engine: Engine,
         steps_per_epoch: int,
-        ema_handler: Optional["AtriaEMAHandler"] = None,
+        ema_handler: AtriaEMAHandler | None = None,
     ):
         """
         Attach the validation engine to a parent engine.
@@ -217,7 +220,7 @@ class ValidationEngine(AtriaEngine):
         self._parent_engine = parent_engine
         self._ema_handler = ema_handler
 
-    def run(self) -> "Engine":
+    def run(self) -> Engine:
         """
         Run the validation engine.
 
@@ -311,7 +314,7 @@ class TestEngine(AtriaEngine):
             test_run=self._test_run,
         )
 
-    def _configure_model_forward_saver(self, engine: "Engine", output_name: str):
+    def _configure_model_forward_saver(self, engine: Engine, output_name: str):
         """
         Configure model forward saver for saving outputs to disk.
 
@@ -366,7 +369,7 @@ class TestEngine(AtriaEngine):
 
         return checkpoint_file
 
-    def run(self) -> dict[str, "State"]:
+    def run(self) -> dict[str, State]:
         """
         Run the test engine.
 
@@ -374,9 +377,6 @@ class TestEngine(AtriaEngine):
             dict[str, State]: Output states for each checkpoint type.
         """
         from atria_ml.training.engines.utilities import FixedBatchIterator
-
-        # move task module models to device
-        self._model_pipeline.to_device(self._device, sync_bn=self._sync_batchnorm)
 
         # find checkpoint files
         checkpoint_file_paths = self._find_checkpoint_files()
@@ -391,19 +391,13 @@ class TestEngine(AtriaEngine):
             else:
                 self._metric_logging_prefix = checkpoint_type
 
-            # initialize engine
-            engine = self._initialize_ignite_engine()
-
-            # configure engine
-            self._configure_engine(engine)
-
             # configure checkpoint
             if checkpoint_file_path is not None:
                 self._load_checkpoint(checkpoint_file_path)
 
             # configure output saver
             self._configure_model_forward_saver(
-                engine=engine, output_name=checkpoint_type
+                engine=self._engine, output_name=checkpoint_type
             )
 
             # run engine
@@ -417,7 +411,7 @@ class TestEngine(AtriaEngine):
                     f"Running test on pretrained weights with batch size "
                     f"[{self._dataloader.batch_size}] and output_dir: {self._output_dir}"
                 )
-            output_states[checkpoint_type] = engine.run(
+            output_states[checkpoint_type] = self._engine.run(
                 (
                     FixedBatchIterator(self._dataloader, self._dataloader.batch_size)
                     if self._use_fixed_batch_iterator
@@ -499,7 +493,7 @@ class VisualizationEngine(AtriaEngine):
             test_run=self._test_run,
         )
 
-    def _initialize_ignite_engine(self) -> "Engine":
+    def _initialize_ignite_engine(self) -> Engine:
         """
         Initialize the visualization engine.
 
@@ -509,7 +503,7 @@ class VisualizationEngine(AtriaEngine):
         self._engine_step.attach_parent_engine(self._parent_engine)
         return super()._initialize_ignite_engine()
 
-    def _configure_engine(self, engine: "Engine"):
+    def _configure_engine(self, engine: Engine) -> Engine:
         """
         Configure the visualization engine.
 
@@ -518,8 +512,9 @@ class VisualizationEngine(AtriaEngine):
         """
         self._configure_test_run(engine=engine)
         self._configure_progress_bar(engine=engine)
+        return engine
 
-    def _configure_progress_bar(self, engine: "Engine") -> None:
+    def _configure_progress_bar(self, engine: Engine) -> None:
         """
         Configure progress bar for visualization engine.
 
@@ -537,9 +532,9 @@ class VisualizationEngine(AtriaEngine):
 
     def attach_to_engine(
         self,
-        parent_engine: "Engine",
+        parent_engine: Engine,
         steps_per_epoch: int,
-        ema_handler: Optional["AtriaEMAHandler"] = None,
+        ema_handler: AtriaEMAHandler | None = None,
     ):
         """
         Attach the visualization engine to a parent engine.
@@ -569,7 +564,7 @@ class VisualizationEngine(AtriaEngine):
         self._parent_engine = parent_engine
         self._ema_handler = ema_handler
 
-    def run(self) -> "Engine":
+    def run(self) -> Engine:
         """
         Run the visualization engine.
 
@@ -651,8 +646,8 @@ class InferenceEngine(AtriaEngine):
         )
 
     def build(
-        self, model_pipeline: "AtriaModelPipeline", device: Union[str, "torch.device"]
-    ) -> "AtriaEngine":
+        self, model_pipeline: AtriaModelPipeline, device: str | torch.device
+    ) -> AtriaEngine:
         """
         Build the engine with the specified configurations.
 
@@ -683,12 +678,9 @@ class InferenceEngine(AtriaEngine):
         # initialize engine
         self._engine = self._initialize_ignite_engine()
 
-        # configure engine
-        self._configure_engine(self._engine)
-
         return self
 
-    def _configure_engine(self, engine: "Engine"):
+    def _configure_engine(self, engine: Engine) -> Engine:
         """
         Configure the engine with handlers and settings.
 
@@ -697,8 +689,9 @@ class InferenceEngine(AtriaEngine):
         """
         self._configure_metrics(engine=engine)
         self._configure_progress_bar(engine=engine)
+        return engine
 
-    def run(self, dataloader: Iterator) -> dict[str, "State"]:
+    def run(self, dataloader: Iterator) -> dict[str, State]:
         """
         Run the test engine.
 
@@ -851,7 +844,7 @@ class FeatureExtractorEngine(AtriaEngine):
             return False
         return True
 
-    def _configure_engine(self, engine: "Engine", data_split: str):
+    def _configure_engine(self, engine: Engine) -> Engine:
         """
         Configure the feature extraction engine.
 
@@ -870,7 +863,7 @@ class FeatureExtractorEngine(AtriaEngine):
             self._features_path, maxcount=self._max_shard_size, overwrite=True
         )
 
-        def write_features(engine: "Engine"):
+        def write_features(engine: Engine):
             features = engine.state.output
             batch = dict(
                 __key__=engine.state.batch["__key__"],
@@ -894,11 +887,12 @@ class FeatureExtractorEngine(AtriaEngine):
                         f"{sample['__key__']},{sample['__index__']},{self._features_path_msgpack_writer.fname},{self._features_path_msgpack_writer.count - 1}\n"
                     )
 
-        def cleanup(engine: "Engine"):
+        def cleanup(engine: Engine):
             self._features_path_msgpack_writer.close()
 
         engine.add_event_handler(Events.ITERATION_COMPLETED, write_features)
         engine.add_event_handler(Events.EPOCH_COMPLETED, cleanup)
+        return engine
 
     def run(self, split: str):
         """

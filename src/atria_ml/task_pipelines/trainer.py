@@ -29,11 +29,12 @@ def initialize_and_run(
     config._zen_exclude.append("package")  # exclude atria base config args
     config._zen_exclude.append("version")  # exclude atria base config args
 
-    logger.info("Initializing Atria Trainer with config: %s", config)
+    logger.info("Initializing Atria Trainer...")
+
     atria_trainer: Trainer = instantiate(
         config, _convert_="object", _target_wrapper_=pydantic_parser
     )
-    atria_trainer.build(run_config=RunConfig(data=config))
+    atria_trainer.build(local_rank=local_rank, run_config=RunConfig(data=config))
     return atria_trainer.run()
 
 

@@ -24,4 +24,4 @@ fi
 
 export PYTHONPATH="$PROJECT_ROOT/src:$PYTHONPATH"
 
-uv run python $SCRIPT_DIR/../src/atria_ml/build_registry.py
+ATRIA_FILE_STORE_BUILD_ENABLED=True uv run python $SCRIPT_DIR/../src/atria_ml/build_registry.py

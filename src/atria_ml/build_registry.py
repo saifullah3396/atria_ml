@@ -21,16 +21,17 @@ from pathlib import Path
 
 from atria_registry.utilities import write_registry_to_yaml
 
+from atria_ml.optimizers.ext_modules import *  # noqa
+from atria_ml.optimizers.lars import *  # noqa
+from atria_ml.schedulers.cosine_annealing_lr import *  # noqa
+from atria_ml.schedulers.ext_modules import *  # noqa
+from atria_ml.schedulers.lambda_lr import *  # noqa
+from atria_ml.schedulers.polynomial_decay_lr import *  # noqa
+
 # from atria_ml.task_pipelines._data_visualizer import *  # noqa
 # from atria_ml.task_pipelines._evaluator import *  # noqa
 # from atria_ml.task_pipelines._inferencer import *  # noqa
 from atria_ml.task_pipelines._trainer import *  # noqa
-from atria_ml.training.optimizers.ext_modules import *  # noqa
-from atria_ml.training.optimizers.lars import *  # noqa
-from atria_ml.training.schedulers.cosine_annealing_lr import *  # noqa
-from atria_ml.training.schedulers.ext_modules import *  # noqa
-from atria_ml.training.schedulers.lambda_lr import *  # noqa
-from atria_ml.training.schedulers.polynomial_decay_lr import *  # noqa
 
 
 class AtriaConfig:
@@ -77,11 +78,6 @@ class AtriaConfig:
 
 
 if __name__ == "__main__":
-    import shutil
-
-    config_path = Path(__file__).parent / "conf"
-    if config_path.exists():
-        shutil.rmtree(config_path)
     AtriaConfig.initialize()
     write_registry_to_yaml(
         str(Path(__file__).parent / "conf"),

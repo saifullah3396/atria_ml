@@ -20,10 +20,13 @@ Version: 1.0.0
 License: MIT
 """
 
+from __future__ import annotations
+
+import copy
 from abc import abstractmethod
 from collections.abc import Callable
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING
 
 from atria_core.logger.logger import get_logger
 
@@ -94,6 +97,7 @@ class AtriaEngine:
         self._test_run = test_run
         self._use_fixed_batch_iterator = use_fixed_batch_iterator
         self._checkpoints_dir = checkpoints_dir
+        self._engine = None
         self._progress_bar = None
         self._event_handlers = []
 
@@ -127,7 +131,7 @@ class AtriaEngine:
         """
         return self.steps_per_epoch * self._max_epochs
 
-    def add_event_handler(self, event: "Events", handler: Callable):
+    def add_event_handler(self, event: Events, handler: Callable):
         """
         Add an event handler to the engine.
 
@@ -138,7 +142,7 @@ class AtriaEngine:
         self._event_handlers.append((event, handler))
 
     @abstractmethod
-    def _setup_engine_step(self) -> "BaseEngineStep":
+    def _setup_engine_step(self) -> BaseEngineStep:
         """
         Abstract method for engine step. Must be implemented by subclasses.
         """
@@ -146,11 +150,11 @@ class AtriaEngine:
     def build(
         self,
         output_dir: str | Path | None,
-        model_pipeline: "AtriaModelPipeline",
-        dataloader: Union["DataLoader", "WebLoader"],
-        device: Union[str, "torch.device"],
-        tb_logger: Optional["TensorboardLogger"] = None,
-    ) -> "AtriaEngine":
+        model_pipeline: AtriaModelPipeline,
+        dataloader: DataLoader | WebLoader,
+        device: str | torch.device,
+        tb_logger: TensorboardLogger | None = None,
+    ) -> AtriaEngine:
         """
         Build the engine with the specified configurations.
 
@@ -173,6 +177,9 @@ class AtriaEngine:
         self._device = torch.device(device)
         self._tb_logger = tb_logger
 
+        # move task module models to device
+        self._model_pipeline.to_device(self._device, sync_bn=self._sync_batchnorm)
+
         # initialize the engine step
         self._engine_step = self._setup_engine_step()
 
@@ -184,9 +191,12 @@ class AtriaEngine:
         # attach the progress bar to task module
         self._model_pipeline.progress_bar = self._progress_bar
 
+        # initialize the Ignite engine
+        self._engine = self._initialize_ignite_engine()
+
         return self
 
-    def run(self) -> "State":
+    def run(self) -> State:
         """
         Run the engine.
 
@@ -195,15 +205,6 @@ class AtriaEngine:
         """
         from atria_ml.training.engines.utilities import FixedBatchIterator
 
-        # move task module models to device
-        self._model_pipeline.to_device(self._device, sync_bn=self._sync_batchnorm)
-
-        # initialize engine
-        engine = self._initialize_ignite_engine()
-
-        # configure engine
-        self._configure_engine(engine)
-
         # run engine
         if self._output_dir is not None:
             logger.info(
@@ -211,7 +212,8 @@ class AtriaEngine:
             )
         else:
             logger.info(f"Running engine {self.__class__.__name__}.")
-        return engine.run(
+
+        return self._engine.run(
             (
                 FixedBatchIterator(self._dataloader, self._dataloader.batch_size)
                 if self._use_fixed_batch_iterator
@@ -221,7 +223,7 @@ class AtriaEngine:
             epoch_length=self._epoch_length,
         )
 
-    def _initialize_ignite_engine(self) -> "Engine":
+    def _initialize_ignite_engine(self) -> Engine:
         """
         Initialize the engine.
 
@@ -232,9 +234,9 @@ class AtriaEngine:
 
         engine = Engine(self._engine_step)
         engine.logger.propagate = False
-        return engine
+        return self._configure_engine(engine)
 
-    def _configure_engine(self, engine: "Engine"):
+    def _configure_engine(self, engine: Engine) -> Engine:
         """
         Configure the engine with handlers and settings.
 
@@ -248,7 +250,9 @@ class AtriaEngine:
         self._configure_tb_logger(engine=engine)
         self._attach_event_handlers(engine=engine)
 
-    def _configure_gpu_stats_callback(self, engine: "Engine"):
+        return engine
+
+    def _configure_gpu_stats_callback(self, engine: Engine):
         """
         Configure GPU stats callback for the engine.
 
@@ -262,7 +266,7 @@ class AtriaEngine:
         if self._logging.log_gpu_stats:
             _attach_gpu_stats_callback_to_engine(engine, self._logging.logging_steps)
 
-    def _configure_time_profiler(self, engine: "Engine"):
+    def _configure_time_profiler(self, engine: Engine):
         """
         Configure time profiler for the engine.
 
@@ -274,7 +278,7 @@ class AtriaEngine:
         if self._logging.profile_time:
             _attach_time_profiler_to_engine(engine)
 
-    def _configure_metrics(self, engine: "Engine") -> None:
+    def _configure_metrics(self, engine: Engine) -> None:
         """
         Configure metrics for the engine.
 
@@ -289,12 +293,12 @@ class AtriaEngine:
             )
             _attach_metrics_to_engine(
                 engine=engine,
-                metrics=self._model_pipeline.metrics,
+                metrics=copy.deepcopy(self._model_pipeline.metrics),
                 prefix=self._metric_logging_prefix,
                 stage=self._engine_step.stage,
             )
 
-    def _configure_running_avg_logging(self, engine: "Engine") -> None:
+    def _configure_running_avg_logging(self, engine: Engine) -> None:
         """
         Configure running average logging for the engine.
 
@@ -309,7 +313,7 @@ class AtriaEngine:
             outputs_to_running_avg=self._outputs_to_running_avg,
         )
 
-    def _configure_progress_bar(self, engine: "Engine") -> None:
+    def _configure_progress_bar(self, engine: Engine) -> None:
         """
         Configure progress bar for the engine.
 
@@ -329,7 +333,7 @@ class AtriaEngine:
             )
 
             @engine.on(Events.EPOCH_COMPLETED)
-            def progress_on_epoch_completed(engine: "Engine") -> None:
+            def progress_on_epoch_completed(engine: Engine) -> None:
                 _log_eval_metrics(
                     logger=logger,
                     epoch=engine.state.epoch,
@@ -338,7 +342,7 @@ class AtriaEngine:
                     metrics=engine.state.metrics,
                 )
 
-    def _configure_tb_logger(self, engine: "Engine"):
+    def _configure_tb_logger(self, engine: Engine):
         """
         Configure Tensorboard logger for the engine.
 
@@ -361,7 +365,7 @@ class AtriaEngine:
                 tag="epoch",
             )
 
-    def _configure_test_run(self, engine: "Engine"):
+    def _configure_test_run(self, engine: Engine):
         """
         Configure test run settings for the engine.
 
@@ -402,7 +406,7 @@ class AtriaEngine:
                 Events.ITERATION_COMPLETED, print_iteration_completed_info
             )
 
-    def _attach_event_handlers(self, engine: "Engine"):
+    def _attach_event_handlers(self, engine: Engine):
         """
         Attach custom event handlers to the engine.
 

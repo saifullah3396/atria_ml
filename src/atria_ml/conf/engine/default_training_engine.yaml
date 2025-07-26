@@ -1,10 +1,9 @@
 _target_: atria_ml.training.engines.training.TrainingEngine
+_partial_: false
 defaults:
-- _self_
 - /optimizer@optimizer: adam
 - /lr_scheduler@lr_scheduler: cosine_annealing_lr
-optimizer: ???
-lr_scheduler: null
+- _self_
 max_epochs: 100
 epoch_length: null
 outputs_to_running_avg: null

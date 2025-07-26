@@ -139,6 +139,7 @@ class Trainer:
         do_visualization: bool = False,
         do_test: bool = True,
         vis_batch_size: int = 64,
+        test_run: bool = False,
     ):
         self._data_pipeline = data_pipeline
         self._model_pipeline = model_pipeline
@@ -154,6 +155,7 @@ class Trainer:
         self._do_visualization = do_visualization
         self._do_test = do_test
         self._visualization_batch_size = vis_batch_size
+        self._test_run = test_run
 
     @property
     def train_dataloader(self):
@@ -203,28 +205,22 @@ class Trainer:
     def tb_logger(self):
         return self._tb_logger
 
-    def _initialize_runtime(self) -> None:
-        import ignite.distributed as idist
-
+    def _initialize_runtime(self, local_rank: int) -> None:
         from atria_ml.training.utilities.torch_utils import _initialize_torch
 
         # initialize training
-        _initialize_torch(seed=self._seed, deterministic=self._deterministic)
+        logger.info("Initializing torch runtime environment...")
+        self._seed = _initialize_torch(
+            seed=self._seed, deterministic=self._deterministic
+        )
 
         # initialize torch device (cpu or gpu)
-        self._device = idist.device()
+        self._device = local_rank
+
+        logger.info(f"Seed set to {self._seed} on device: {self._device}")
 
     def _setup_logging(self) -> None:
-        logger.info("Setting up logging...")
-        import logging
-
         from atria_ml.training.utilities.torch_utils import _setup_tensorboard
-
-        for handler in logger.handlers:
-            if isinstance(handler, logging.FileHandler):
-                logger.info(
-                    f"Verbose logs can be found at file: {handler.baseFilename}"
-                )
 
         # initialize logging directory and tensorboard logger
         self._tb_logger = _setup_tensorboard(self._output_dir)
@@ -232,6 +228,7 @@ class Trainer:
     def _build_data_pipeline(self):
         # build data module
         logger.info("Setting up data pipeline")
+        self._model_pipeline.config.runtime_transforms.compose()
         self._data_pipeline.build(
             runtime_transforms=self._model_pipeline.config.runtime_transforms
         )
@@ -243,13 +240,20 @@ class Trainer:
             dataset_metadata=self._data_pipeline.dataset_metadata,
             tb_logger=self._tb_logger,
         )
+        logger.info(self._model_pipeline)
 
     def _build_dataloaders(self) -> None:
-        logger.info("Initializing train dataloader.")
+        logger.info(
+            "Initializing train dataloader with config: %s",
+            self._data_pipeline._dataloader_config.train_config,
+        )
         self._train_dataloader = self._data_pipeline.train_dataloader()
         if self._validation_engine is not None:
             # check if validation dataset is available
-            logger.info("Initializing validation dataloader.")
+            logger.info(
+                "Initializing validation dataloader with config: %s",
+                self._data_pipeline._dataloader_config.eval_config,
+            )
             self._validation_dataloder = self._data_pipeline.validation_dataloader()
             if self._validation_dataloder is None:
                 logger.warning(
@@ -274,6 +278,20 @@ class Trainer:
         self._test_dataloader = self._data_pipeline.test_dataloader()
 
     def _build_training_engine(self) -> None:
+        # initilize the test engine from partial
+        if self._training_engine is not None:
+            logger.info("Setting up training engine")
+            self._training_engine = self._training_engine.build(
+                run_config=self._run_config,
+                output_dir=self._output_dir,
+                model_pipeline=self._model_pipeline,
+                dataloader=self._train_dataloader,
+                device=self._device,
+                tb_logger=self._tb_logger,
+                validation_engine=self._validation_engine,
+                visualization_engine=self._visualization_engine,
+            )
+
         if self._validation_engine is not None:
             logger.info("Setting up validation engine")
             self._validation_engine = self._validation_engine.build(
@@ -294,20 +312,6 @@ class Trainer:
                 tb_logger=self._tb_logger,
             )
 
-        # initilize the test engine from partial
-        if self._training_engine is not None:
-            logger.info("Setting up training engine")
-            self._training_engine = self._training_engine.build(
-                run_config=self._run_config,
-                output_dir=self._output_dir,
-                model_pipeline=self._model_pipeline,
-                dataloader=self._train_dataloader,
-                device=self._device,
-                tb_logger=self._tb_logger,
-                validation_engine=self._validation_engine,
-                visualization_engine=self._visualization_engine,
-            )
-
     def _build_test_engine(self) -> None:
         if self._test_engine is not None:
             logger.info("Setting up test engine")
@@ -319,9 +323,15 @@ class Trainer:
                 tb_logger=self._tb_logger,
             )
 
-    def build(self, run_config: RunConfig) -> None:
+    def build(self, local_rank: int, run_config: RunConfig) -> None:
+        import logging
+
+        for handler in logger.handlers:
+            if isinstance(handler, logging.FileHandler):
+                logger.info(f"Log file path: {handler.baseFilename}")
+
         self._run_config = run_config
-        self._initialize_runtime()
+        self._initialize_runtime(local_rank=local_rank)
         self._setup_logging()
         self._build_data_pipeline()
         self._build_model_pipeline()

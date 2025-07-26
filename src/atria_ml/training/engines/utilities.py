@@ -45,8 +45,8 @@ from functools import partial
 from typing import TYPE_CHECKING, Any
 
 from atria_core.logger.logger import get_logger
+from atria_core.types import ModelOutput
 from atria_core.utilities.strings import _indent_string
-from atria_models.data_types.outputs import ModelOutput
 from omegaconf import DictConfig
 
 from atria_ml.training.utilities.constants import TrainingStage

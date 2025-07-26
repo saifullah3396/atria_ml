@@ -1,5 +1,4 @@
-_target_: atria_ml.registry.registry_groups.OptimizerConfig
-optimizer: torch.optim.ASGD
+_partial_: false
 lr: 0.01
 lambd: 0.0001
 alpha: 0.75
@@ -8,3 +7,5 @@ weight_decay: 0
 foreach: null
 maximize: false
 differentiable: false
+module: torch.optim.asgd.ASGD
+_target_: atria_ml.registry.registry_groups.OptimizerBuilder

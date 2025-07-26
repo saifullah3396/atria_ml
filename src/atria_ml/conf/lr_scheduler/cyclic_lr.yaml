@@ -1,5 +1,4 @@
-_target_: atria_ml.registry.registry_groups.SchedulerConfig
-scheduler: torch.optim.lr_scheduler.CyclicLR
+_partial_: false
 base_lr: ???
 max_lr: ???
 step_size_up: 2000
@@ -13,3 +12,5 @@ base_momentum: 0.8
 max_momentum: 0.9
 last_epoch: -1
 verbose: false
+module: torch.optim.lr_scheduler.CyclicLR
+_target_: atria_ml.registry.registry_groups.LRSchedulerBuilder

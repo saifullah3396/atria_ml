@@ -1,5 +1,4 @@
-_target_: atria_ml.registry.registry_groups.OptimizerConfig
-optimizer: torch.optim.RMSprop
+_partial_: false
 lr: 0.01
 alpha: 0.99
 eps: 1.0e-08
@@ -9,3 +8,5 @@ centered: false
 foreach: null
 maximize: false
 differentiable: false
+module: torch.optim.rmsprop.RMSprop
+_target_: atria_ml.registry.registry_groups.OptimizerBuilder

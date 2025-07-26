@@ -9,17 +9,17 @@ from typing import Any
 from atria_ml.registry import LR_SCHEDULER
 
 
-@LR_SCHEDULER.register_callable_scheduler("polynomial_decay_lr")
+@LR_SCHEDULER.register("polynomial_decay_lr")
 def polynomial_decay_lr(
-    optimizer: Any, num_training_steps: int, max_decay_steps: int = -1
+    optimizer: Any, total_update_steps: int, max_decay_steps: int = -1
 ):
     """
     Registers a polynomial decay learning rate scheduler.
 
     Args:
         optimizer (Any): The optimizer for which the learning rate scheduler is applied. Must be an instance of `torch.optim.Optimizer`.
-        num_training_steps (int): The total number of training steps.
-        max_decay_steps (int, optional): The maximum number of steps for decay. Defaults to -1, which means it will use `num_training_steps`.
+        total_update_steps (int): The total number of training steps.
+        max_decay_steps (int, optional): The maximum number of steps for decay. Defaults to -1, which means it will use `total_update_steps`.
 
     Returns:
         PolynomialDecayLR: An instance of the custom learning rate scheduler.
@@ -96,5 +96,5 @@ def polynomial_decay_lr(
     assert isinstance(optimizer, torch.optim.Optimizer), (
         "optimizer must be a torch optimizer"
     )
-    max_decay_steps = num_training_steps if max_decay_steps == -1 else max_decay_steps
+    max_decay_steps = total_update_steps if max_decay_steps == -1 else max_decay_steps
     return PolynomialDecayLR(optimizer, max_decay_steps=max_decay_steps)

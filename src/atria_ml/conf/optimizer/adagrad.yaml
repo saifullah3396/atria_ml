@@ -1,5 +1,4 @@
-_target_: atria_ml.registry.registry_groups.OptimizerConfig
-optimizer: torch.optim.Adagrad
+_partial_: false
 lr: 0.01
 lr_decay: 0
 weight_decay: 0
@@ -8,3 +7,5 @@ eps: 1.0e-10
 foreach: null
 maximize: false
 differentiable: false
+module: torch.optim.adagrad.Adagrad
+_target_: atria_ml.registry.registry_groups.OptimizerBuilder

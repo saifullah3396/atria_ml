@@ -40,7 +40,7 @@ logger = get_logger(__name__)
 
 @TASK_PIPELINE.register(
     "evaluator",
-    hydra_defaults=[
+    defaults=[
         "_self_",
         {"/data_pipeline@data_pipeline": "default"},
         {"/model_pipeline@model_pipeline": "image_classification"},

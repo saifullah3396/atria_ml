@@ -14,7 +14,7 @@ logger = get_logger(__name__)
 
 @TASK_PIPELINE.register(
     "data_visualizer",
-    hydra_defaults=["_self_", {"/data_pipeline@data_pipeline": "default"}],
+    defaults=["_self_", {"/data_pipeline@data_pipeline": "default"}],
     zen_meta={
         "hydra": {
             "run": {"dir": "/tmp/data_visualizer"},

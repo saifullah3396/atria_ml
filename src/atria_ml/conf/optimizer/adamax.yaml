@@ -1,5 +1,4 @@
-_target_: atria_ml.registry.registry_groups.OptimizerConfig
-optimizer: torch.optim.Adamax
+_partial_: false
 lr: 0.002
 betas:
 - 0.9
@@ -9,3 +8,5 @@ weight_decay: 0
 foreach: null
 maximize: false
 differentiable: false
+module: torch.optim.adamax.Adamax
+_target_: atria_ml.registry.registry_groups.OptimizerBuilder

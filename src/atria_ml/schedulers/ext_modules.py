@@ -23,6 +23,4 @@ for scheduler_name, scheduler_path in [
     ("cyclic_lr", "torch.optim.lr_scheduler.CyclicLR"),
     ("reduce_lr_on_plateau", "ignite.handlers.ReduceLROnPlateauScheduler"),
 ]:
-    LR_SCHEDULER.register_scheduler(
-        scheduler_path=scheduler_path, scheduler_name=scheduler_name
-    )
+    LR_SCHEDULER.register(scheduler_name)(scheduler_path)

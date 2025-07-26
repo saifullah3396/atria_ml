@@ -1,6 +1,7 @@
-_target_: atria_ml.registry.registry_groups.SchedulerConfig
-scheduler: torch.optim.lr_scheduler.StepLR
+_partial_: false
 step_size: ???
 gamma: 0.1
 last_epoch: -1
 verbose: false
+module: torch.optim.lr_scheduler.StepLR
+_target_: atria_ml.registry.registry_groups.LRSchedulerBuilder

@@ -1,5 +1,4 @@
-_target_: atria_ml.registry.registry_groups.OptimizerConfig
-optimizer: torch.optim.Adadelta
+_partial_: false
 lr: 1.0
 rho: 0.9
 eps: 1.0e-06
@@ -7,3 +6,5 @@ weight_decay: 0
 foreach: null
 maximize: false
 differentiable: false
+module: torch.optim.adadelta.Adadelta
+_target_: atria_ml.registry.registry_groups.OptimizerBuilder

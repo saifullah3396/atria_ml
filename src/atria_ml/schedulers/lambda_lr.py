@@ -19,11 +19,11 @@ from typing import Any
 from atria_ml.registry import LR_SCHEDULER
 
 
-@LR_SCHEDULER.register_callable_scheduler("lambda_lr")
+@LR_SCHEDULER.register("lambda_lr")
 def lambda_lr(
     optimizer: Any,
-    num_training_steps: int,
-    num_warmup_steps: int,
+    total_update_steps: int,
+    total_warmup_steps: int,
     lambda_fn: str = "linear",
     last_epoch: int = -1,
 ):
@@ -36,8 +36,8 @@ def lambda_lr(
 
     Args:
         optimizer (torch.optim.Optimizer): The optimizer for which to schedule the learning rate.
-        num_training_steps (int): The total number of training steps.
-        num_warmup_steps (int): The number of warmup steps before the learning rate starts decaying.
+        total_update_steps (int): The total number of training steps.
+        total_warmup_steps (int): The number of warmup steps before the learning rate starts decaying.
         lambda_fn (str, optional): The name of the lambda function to use. Currently, only "linear"
             is supported. Defaults to "linear".
         last_epoch (int, optional): The index of the last epoch. Defaults to -1.
@@ -66,12 +66,12 @@ def lambda_lr(
             Returns:
                 float: The learning rate multiplier for the current step.
             """
-            if current_step < num_warmup_steps:
-                return float(current_step) / float(max(1, num_warmup_steps))
+            if current_step < total_warmup_steps:
+                return float(current_step) / float(max(1, total_warmup_steps))
             return max(
                 0.0,
-                float(num_training_steps - current_step)
-                / float(max(1, num_training_steps - num_warmup_steps)),
+                float(total_update_steps - current_step)
+                / float(max(1, total_update_steps - total_warmup_steps)),
             )
 
         lambda_fn = linear_lambda_lr

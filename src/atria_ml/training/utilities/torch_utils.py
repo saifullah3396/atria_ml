@@ -92,6 +92,8 @@ def _initialize_torch(seed: int = 0, deterministic: bool = False):
     torch.backends.cuda.matmul.allow_tf32 = True
     torch.backends.cudnn.allow_tf32 = True
 
+    return seed
+
 
 def _setup_tensorboard(output_dir: str) -> "BaseLogger":
     """

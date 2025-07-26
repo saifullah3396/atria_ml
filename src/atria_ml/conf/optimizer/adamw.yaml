@@ -1,5 +1,4 @@
-_target_: atria_ml.registry.registry_groups.OptimizerConfig
-optimizer: torch.optim.AdamW
+_partial_: false
 lr: 0.001
 betas:
 - 0.9
@@ -12,3 +11,5 @@ foreach: null
 capturable: false
 differentiable: false
 fused: null
+module: torch.optim.adamw.AdamW
+_target_: atria_ml.registry.registry_groups.OptimizerBuilder

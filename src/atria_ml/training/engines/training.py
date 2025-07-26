@@ -14,7 +14,7 @@ Dependencies:
     - atria_ml.registry: For registering the training engine.
     - atria_ml.training.configs: For various training configurations.
     - atria_ml.training.engines: For engine utilities and steps.
-    - atria_ml.training.schedulers: For learning rate scheduler types.
+    - atria_ml.schedulers: For learning rate scheduler types.
 
 Author: Your Name (your.email@example.com)
 Date: 2025-04-14
@@ -22,17 +22,19 @@ Version: 1.0.0
 License: MIT
 """
 
+from __future__ import annotations
+
 import copy
 import math
 from collections import OrderedDict
 from collections.abc import Callable, Mapping
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional, Union, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from atria_core.logger.logger import get_logger
 
 from atria_ml.registry import ENGINE
-from atria_ml.registry.registry_groups import OptimizerConfig, SchedulerConfig
+from atria_ml.registry.registry_groups import LRSchedulerBuilder, OptimizerBuilder
 from atria_ml.training.configs.early_stopping_config import EarlyStoppingConfig
 from atria_ml.training.configs.gradient_config import GradientConfig
 from atria_ml.training.configs.logging_config import LoggingConfig
@@ -57,7 +59,7 @@ logger = get_logger(__name__)
 
 @ENGINE.register(
     "default_training_engine",
-    hydra_defaults=[
+    defaults=[
         "_self_",
         {"/optimizer@optimizer": "adam"},
         {"/lr_scheduler@lr_scheduler": "cosine_annealing_lr"},
@@ -72,7 +74,6 @@ class TrainingEngine(AtriaEngine):
     model checkpointing, and other training-related functionalities.
 
     Attributes:
-        _REGISTRY_CONFIGS (ClassVar[Type[dict]]): Registry configurations for the training engine.
         _optimizer (OptimizerType): Factory for creating optimizers.
         _lr_scheduler (Optional[LRSchedulerType]): Factory for creating learning rate schedulers.
         _eval_training (Optional[bool]): Flag to enable evaluation during training.
@@ -113,8 +114,8 @@ class TrainingEngine(AtriaEngine):
 
     def __init__(
         self,
-        optimizer: OptimizerConfig,
-        lr_scheduler: SchedulerConfig | None = None,
+        optimizer: OptimizerBuilder,
+        lr_scheduler: LRSchedulerBuilder | None = None,
         max_epochs: int = 100,
         epoch_length: int | None = None,
         outputs_to_running_avg: list[str] | None = None,
@@ -231,14 +232,14 @@ class TrainingEngine(AtriaEngine):
         self,
         run_config: RunConfig,
         output_dir: str | Path | None,
-        model_pipeline: "AtriaModelPipeline",
-        dataloader: Union["DataLoader", "WebLoader"],
-        device: Union[str, "torch.device"],
-        grad_scaler: Optional["torch.cuda.amp.GradScaler"] = None,
+        model_pipeline: AtriaModelPipeline,
+        dataloader: DataLoader | WebLoader,
+        device: str | torch.device,
+        grad_scaler: torch.cuda.amp.GradScaler | None = None,
         validation_engine: ValidationEngine = None,
         visualization_engine: VisualizationEngine = None,
-        tb_logger: Optional["TensorboardLogger"] = None,
-    ) -> "TrainingEngine":
+        tb_logger: TensorboardLogger | None = None,
+    ) -> TrainingEngine:
         """
         Builds the training engine with the provided configurations.
 
@@ -255,13 +256,11 @@ class TrainingEngine(AtriaEngine):
         Returns:
             TrainingEngine: The configured training engine.
         """
-        import inspect
 
         import ignite.distributed as idist
         import torch
         from atria_core.constants import _DEFAULT_OPTIMIZER_PARAMETERS_KEY
-        from atria_core.utilities.common import _validate_partial_class
-        from ignite.handlers import LRScheduler, ProgressBar
+        from ignite.handlers import ProgressBar
 
         from atria_ml.training.engines.utilities import (
             _print_optimizers_info,
@@ -290,10 +289,9 @@ class TrainingEngine(AtriaEngine):
 
         self._optimizers = {}
         for k, opt in self._optimizer.items():
-            _validate_partial_class(opt, torch.optim.Optimizer, f"[{k}] optimizer")
             if k not in optimized_parameters_dict.keys():
                 raise ValueError(
-                    f"Your optimizer configuration does not align the model optimizer "
+                    f"Your optimizer configuration does not align with the model optimizer "
                     f"parameter groups. {k} =/= {optimized_parameters_dict.keys()}"
                 )
 
@@ -315,22 +313,15 @@ class TrainingEngine(AtriaEngine):
                 }
 
             for k, sch in self._lr_scheduler.items():
-                _validate_partial_class(
-                    sch,
-                    (torch.optim.lr_scheduler.LRScheduler, LRScheduler),
-                    f"[{k}] lr_scheduler",
-                )
-                available_parameters_in_signature = inspect.signature(
-                    sch.func
-                ).parameters
                 runtime_kwargs = {}
                 for kwarg in [
                     "total_update_steps",
                     "total_warmup_steps",
                     "steps_per_epoch",
                 ]:
-                    if kwarg in available_parameters_in_signature.keys():
+                    if kwarg in sch.get_possible_args():
                         runtime_kwargs[kwarg] = getattr(self, kwarg)
+
                 logger.debug(
                     f"Initializing lr scheduler {sch} with runtime kwargs: {runtime_kwargs}"
                 )
@@ -340,6 +331,9 @@ class TrainingEngine(AtriaEngine):
 
             # print information
             _print_schedulers_info(self._lr_schedulers)
+
+        # move task module models to device
+        self._model_pipeline.to_device(self._device, sync_bn=self._sync_batchnorm)
 
         # initialize the engine step
         self._engine_step = self._setup_engine_step()
@@ -352,9 +346,12 @@ class TrainingEngine(AtriaEngine):
         # attach the progress bar to task module
         self._model_pipeline.progress_bar = self._progress_bar
 
+        # initialize the Ignite engine
+        self._engine = self._initialize_ignite_engine()
+
         return self
 
-    def run(self) -> "State":
+    def run(self) -> State:
         """
         Runs the training engine.
 
@@ -363,21 +360,13 @@ class TrainingEngine(AtriaEngine):
         """
         from atria_ml.training.engines.utilities import FixedBatchIterator
 
-        # move task module models to device
-        self._model_pipeline.to_device(self._device, sync_bn=self._sync_batchnorm)
-
-        # initialize engine
-        engine = self._initialize_ignite_engine()
-
-        # configure engine
-        self._configure_engine(engine)
-
         # load training state from checkpoint
-        self._load_training_state_from_checkpoint(engine)
+        self._load_training_state_from_checkpoint(self._engine)
 
-        resume_epoch = engine.state.epoch
+        resume_epoch = self._engine.state.epoch
         if (
-            engine._is_done(engine.state) and resume_epoch >= self._max_epochs
+            self._engine._is_done(self._engine.state)
+            and resume_epoch >= self._max_epochs
         ):  # if we are resuming from last checkpoint and training is already finished
             logger.warning(
                 "Training has already been finished! Either increase the number of "
@@ -390,7 +379,7 @@ class TrainingEngine(AtriaEngine):
         logger.info(
             f"Running training with batch size [{self._dataloader.batch_size}] and output_dir:\n\t{self._output_dir}"
         )
-        return engine.run(
+        return self._engine.run(
             (
                 FixedBatchIterator(self._dataloader, self._dataloader.batch_size)
                 if self._use_fixed_batch_iterator
@@ -400,7 +389,7 @@ class TrainingEngine(AtriaEngine):
             epoch_length=self._epoch_length,
         )
 
-    def _initialize_ignite_engine(self) -> "Engine":
+    def _initialize_ignite_engine(self) -> Engine:
         """
         Initializes the Ignite engine.
 
@@ -435,9 +424,9 @@ class TrainingEngine(AtriaEngine):
 
         engine = IgniteTrainingEngine(self._engine_step)
         engine.logger.propagate = False
-        return engine
+        return self._configure_engine(engine)
 
-    def _configure_train_sampler(self, engine: "Engine"):
+    def _configure_train_sampler(self, engine: Engine):
         """
         Configures the training sampler for distributed training.
 
@@ -448,7 +437,7 @@ class TrainingEngine(AtriaEngine):
         from torch.utils.data.distributed import DistributedSampler
 
         if idist.get_world_size() > 1:
-            from ignite.engine import Engine, Events
+            from ignite.engine import Events
 
             train_sampler = self._dataloader.sampler
             if not isinstance(train_sampler, DistributedSampler):
@@ -474,7 +463,7 @@ class TrainingEngine(AtriaEngine):
                     UserWarning,
                 )
 
-    def _configure_nan_callback(self, engine: "Engine"):
+    def _configure_nan_callback(self, engine: Engine):
         """
         Configures the callback to handle NaN values.
 
@@ -486,7 +475,7 @@ class TrainingEngine(AtriaEngine):
         if self._stop_on_nan:
             _attach_nan_callback_to_engine(engine)
 
-    def _configure_cuda_cache_callback(self, engine: "Engine"):
+    def _configure_cuda_cache_callback(self, engine: Engine):
         """
         Configures the callback to clear CUDA cache.
 
@@ -500,7 +489,7 @@ class TrainingEngine(AtriaEngine):
         if self._clear_cuda_cache:
             _attach_cuda_cache_callback_to_engine(engine)
 
-    def _configure_model_ema_callback(self, engine: "Engine") -> None:
+    def _configure_model_ema_callback(self, engine: Engine) -> None:
         """
         Configures the model EMA callback.
 
@@ -544,7 +533,7 @@ class TrainingEngine(AtriaEngine):
                 ),
             )
 
-    def _configure_metrics(self, engine: "Engine") -> None:
+    def _configure_metrics(self, engine: Engine) -> None:
         """
         Configures metrics for evaluation during training.
 
@@ -554,7 +543,7 @@ class TrainingEngine(AtriaEngine):
         if self._eval_training:
             super()._configure_metrics(engine)
 
-    def _configure_schedulers(self, engine: "Engine") -> None:
+    def _configure_schedulers(self, engine: Engine) -> None:
         """
         Configures learning rate schedulers.
 
@@ -691,7 +680,7 @@ class TrainingEngine(AtriaEngine):
                     engine.add_event_handler(OptimizerEvents.optimizer_step, sch)
                 self._lr_schedulers[k] = sch
 
-    def _configure_progress_bar(self, engine: "Engine") -> None:
+    def _configure_progress_bar(self, engine: Engine) -> None:
         """
         Configures the progress bar for training.
 
@@ -711,7 +700,7 @@ class TrainingEngine(AtriaEngine):
         )
 
         @engine.on(Events.EPOCH_COMPLETED)
-        def progress_on_epoch_completed(engine: "Engine") -> None:
+        def progress_on_epoch_completed(engine: Engine) -> None:
             metrics = copy.deepcopy(engine.state.metrics)
 
             if hasattr(engine.state, "ema_momentum"):
@@ -725,7 +714,7 @@ class TrainingEngine(AtriaEngine):
                 metrics=metrics,
             )
 
-    def _configure_tb_logger(self, engine: "Engine"):
+    def _configure_tb_logger(self, engine: Engine):
         """
         Configures the TensorBoard logger.
 
@@ -766,7 +755,7 @@ class TrainingEngine(AtriaEngine):
                     )
 
     def _prepare_checkpoint_state_dict(
-        self, engine: "Engine", save_weights_only: bool = False
+        self, engine: Engine, save_weights_only: bool = False
     ) -> dict[str, Any]:
         """
         Prepares the state dictionary for checkpointing.
@@ -817,7 +806,7 @@ class TrainingEngine(AtriaEngine):
 
         return checkpoint_state_dict
 
-    def _configure_model_checkpointer(self, engine: "Engine"):
+    def _configure_model_checkpointer(self, engine: Engine):
         """
         Configures the model checkpointer.
 
@@ -906,7 +895,7 @@ class TrainingEngine(AtriaEngine):
                 Events.COMPLETED, best_model_saver
             )
 
-    def _load_training_state_from_checkpoint(self, engine: "Engine"):
+    def _load_training_state_from_checkpoint(self, engine: Engine):
         """
         Loads the training state from a checkpoint.
 
@@ -962,7 +951,7 @@ class TrainingEngine(AtriaEngine):
                     to_load=load_state_dict, checkpoint=resume_checkpoint, strict=False
                 )
 
-    def _configure_early_stopping_callback(self, engine: "Engine") -> None:
+    def _configure_early_stopping_callback(self, engine: Engine) -> None:
         """
         Configures the early stopping callback.
 
@@ -989,7 +978,7 @@ class TrainingEngine(AtriaEngine):
             )
             self._validation_engine.add_event_handler(Events.COMPLETED, es_handler)
 
-    def _configure_validation_engine(self, engine: "Engine") -> None:
+    def _configure_validation_engine(self, engine: Engine) -> None:
         """
         Configures the validation engine.
 
@@ -1003,7 +992,7 @@ class TrainingEngine(AtriaEngine):
                 ema_handler=self._ema_handler,
             )
 
-    def _configure_visualization_engine(self, engine: "Engine") -> None:
+    def _configure_visualization_engine(self, engine: Engine) -> None:
         """
         Configures the visualization engine.
 
@@ -1017,7 +1006,7 @@ class TrainingEngine(AtriaEngine):
                 ema_handler=self._ema_handler,
             )
 
-    def _register_events(self, engine: "Engine") -> None:
+    def _register_events(self, engine: Engine) -> None:
         """
         Registers custom events for the engine.
 
@@ -1033,7 +1022,7 @@ class TrainingEngine(AtriaEngine):
             },
         )
 
-    def _configure_engine(self, engine: "Engine"):
+    def _configure_engine(self, engine: Engine) -> Engine:
         """
         Configures the training engine.
 
@@ -1041,6 +1030,7 @@ class TrainingEngine(AtriaEngine):
             engine (Engine): The training engine.
         """
         # register events if needed
+        self._configure_test_run(engine=engine)
         self._register_events(engine=engine)
 
         # configure the training engine itself
@@ -1067,11 +1057,19 @@ class TrainingEngine(AtriaEngine):
         # print engine configuration info
         self._print_configuration_info()
 
+        return engine
+
     def _print_configuration_info(self):
         """
         Prints the configuration information of the training engine.
         """
-        logger.info("Configured Training Engine:")
+        logger.info("Configured training engine with the following parameters:")
+        logger.info(f"\tOutput directory = {self._output_dir}")
+        logger.info(f"\tDevice = {self._device}")
+        logger.info(f"\tSync batch norm = {self._sync_batchnorm}")
+        logger.info(f"\tBatch size = {self._dataloader.batch_size}")
+        logger.info(f"\tTotal epochs = {self._max_epochs}")
+        logger.info(f"\tEpoch length = {self._epoch_length}")
         logger.info(f"\tTotal steps per epoch = {self.batches_per_epoch}")
         logger.info(
             f"\tGradient accumulation per device = {self._gradient_config.gradient_accumulation_steps}"
@@ -1083,4 +1081,3 @@ class TrainingEngine(AtriaEngine):
             f"\tTotal optimizer update over complete training cycle (scaled by grad accumulation steps) = {self.total_update_steps}"
         )
         logger.info(f"\tTotal warmup steps = {self.total_warmup_steps}")
-        logger.info(f"\tMax epochs = {self._max_epochs}")

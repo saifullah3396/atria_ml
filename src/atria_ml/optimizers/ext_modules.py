@@ -28,8 +28,6 @@ for optimizer_name, optimizer_path in [
     ("rmsprop", "torch.optim.RMSprop"),
     ("rprop", "torch.optim.Rprop"),
     ("sgd", "torch.optim.SGD"),
-    ("lars", "atria_ml.training.optimizers.lars.LARS"),
+    ("lars", "atria_ml.optimizers.lars.LARS"),
 ]:
-    OPTIMIZER.register_optimizer(
-        optimizer_path=optimizer_path, optimizer_name=optimizer_name
-    )
+    OPTIMIZER.register(name=optimizer_name)(optimizer_path)
