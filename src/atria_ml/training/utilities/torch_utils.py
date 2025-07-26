@@ -74,7 +74,6 @@ def _initialize_torch(seed: int = 0, deterministic: bool = False):
     import torch
 
     seed = seed + idist.get_rank()
-    logger.info(f"Global seed set to {seed}")
     _reset_random_seeds(seed)
 
     # Set seed as an environment variable
