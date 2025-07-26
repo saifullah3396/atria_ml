@@ -17,6 +17,8 @@ defaults:
 - override /lr_scheduler@training_engine.lr_scheduler: cosine_annealing_lr
 - _self_
 output_dir: outputs/trainer/${resolve_experiment_name:${experiment_name}}
+resume_checkpoint: null
+test_checkpoint: null
 seed: 42
 deterministic: false
 do_train: true

@@ -53,9 +53,7 @@ model_checkpoint_config:
   load_weights_only: false
   every_n_steps: null
   every_n_epochs: 1
-  load_best_checkpoint_resume: false
   resume_from_checkpoint: true
-  resume_checkpoint_file: null
 gradient_config:
   _target_: atria_ml.training.configs.gradient_config.GradientConfig
   enable_grad_clipping: false

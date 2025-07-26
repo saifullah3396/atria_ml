@@ -251,7 +251,6 @@ class TestEngine(AtriaEngine):
 
     Attributes:
         _REGISTRY_CONFIGS (ClassVar[Type[dict]]): Registry configurations for testing tasks.
-        _test_checkpoint_file (Optional[str]): File path for test checkpoint.
         _save_model_outputs_to_disk (bool): Whether to save model outputs to disk.
         _checkpoint_types (Optional[List[str]]): Types of checkpoints to load.
     """
@@ -265,7 +264,6 @@ class TestEngine(AtriaEngine):
         test_run: bool = False,
         use_fixed_batch_iterator: bool = False,
         checkpoints_dir: str = "checkpoints",
-        test_checkpoint_file: str | None = None,
         save_model_outputs_to_disk: bool = False,
         checkpoint_types: list[str] | None = None,
         with_amp: bool = False,
@@ -282,7 +280,6 @@ class TestEngine(AtriaEngine):
             test_run (bool): Whether to run in test mode.
             use_fixed_batch_iterator (bool): Whether to use fixed batch iterator.
             checkpoints_dir (str): Directory for saving checkpoints.
-            test_checkpoint_file (Optional[str]): File path for test checkpoint.
             save_model_outputs_to_disk (bool): Whether to save model outputs to disk.
             checkpoint_types (Optional[List[str]]): Types of checkpoints to load.
             with_amp (bool): Whether to use automatic mixed precision.
@@ -297,7 +294,6 @@ class TestEngine(AtriaEngine):
             use_fixed_batch_iterator=use_fixed_batch_iterator,
             checkpoints_dir=checkpoints_dir,
         )
-        self._test_checkpoint_file = test_checkpoint_file
         self._save_model_outputs_to_disk = save_model_outputs_to_disk
         self._checkpoint_types = checkpoint_types or ["last", "best"]
         self._with_amp = with_amp
@@ -332,21 +328,15 @@ class TestEngine(AtriaEngine):
                 ModelOutputSaver(output_dir=self._output_dir, output_name=output_name),
             )
 
-    def _find_checkpoint_files(self):
-        pass
-
+    def _find_checkpoint_files_in_output_dir(self) -> list[str]:
         from atria_ml.training.utilities.checkpoints import find_test_checkpoint
 
         checkpoint_dir = Path(self._output_dir) / self._checkpoints_dir
         checkpoint_files = []
         for load_best in [False, True]:
-            checkpoint_file = find_test_checkpoint(
-                self._test_checkpoint_file, checkpoint_dir, load_best=load_best
-            )
-            if checkpoint_file is not None:
-                checkpoint_files.append(
-                    (Path(checkpoint_file), "best" if load_best else "last")
-                )
+            checkpoint = find_test_checkpoint(checkpoint_dir, load_best=load_best)
+            if checkpoint is not None:
+                checkpoint_files.append(checkpoint)
         return checkpoint_files
 
     def _load_checkpoint(self, checkpoint_file: str):
@@ -369,57 +359,47 @@ class TestEngine(AtriaEngine):
 
         return checkpoint_file
 
-    def run(self) -> dict[str, State]:
+    def run(self, test_checkpoint: str | None = None) -> dict[str, State]:
         """
         Run the test engine.
 
         Returns:
             dict[str, State]: Output states for each checkpoint type.
         """
-        from atria_ml.training.engines.utilities import FixedBatchIterator
 
         # find checkpoint files
-        checkpoint_file_paths = self._find_checkpoint_files()
+        if test_checkpoint is None:
+            checkpoint_file_paths = self._find_checkpoint_files_in_output_dir()
+        else:
+            checkpoint_file_paths = [test_checkpoint]
 
         if len(checkpoint_file_paths) == 0:
-            checkpoint_file_paths = [(None, "preloaded")]
-        output_states = {}
-        for checkpoint_file_path, checkpoint_type in checkpoint_file_paths:
-            # set metric logging prefix to checkpoint type
-            if self._metric_logging_prefix is not None:
-                self._metric_logging_prefix += "/" + checkpoint_type
-            else:
-                self._metric_logging_prefix = checkpoint_type
+            logger.warning(
+                "No checkpoint files found for testing. "
+                "Running test with pretrained model without loading any checkpoint."
+            )
+            return super().run()
 
+        output_states = {}
+        for checkpoint_file_path in checkpoint_file_paths:
+            logger.info(
+                f"Checkpoint detected, running test with checkpoint: {checkpoint_file_path}"
+            )
             # configure checkpoint
             if checkpoint_file_path is not None:
                 self._load_checkpoint(checkpoint_file_path)
 
-            # configure output saver
-            self._configure_model_forward_saver(
-                engine=self._engine, output_name=checkpoint_type
-            )
-
-            # run engine
-            if checkpoint_file_path is not None:
-                logger.info(
-                    f"Running test for checkpoint_file_path=[{checkpoint_file_path.name}] with batch size "
-                    f"[{self._dataloader.batch_size}] and output_dir: {self._output_dir}"
-                )
+            checkpoint_name = Path(checkpoint_file_path).name.replace("=", "_")
+            if self._metric_logging_prefix:
+                self._metric_logging_prefix += "/" + checkpoint_name
             else:
-                logger.info(
-                    f"Running test on pretrained weights with batch size "
-                    f"[{self._dataloader.batch_size}] and output_dir: {self._output_dir}"
-                )
-            output_states[checkpoint_type] = self._engine.run(
-                (
-                    FixedBatchIterator(self._dataloader, self._dataloader.batch_size)
-                    if self._use_fixed_batch_iterator
-                    else self._dataloader
-                ),
-                max_epochs=self._max_epochs,
-                epoch_length=self._epoch_length,
-            )
+                self._metric_logging_prefix = checkpoint_name
+
+            # reinitialize engine
+            self._engine = self._initialize_ignite_engine()
+
+            # run test engine
+            output_states[checkpoint_name] = super().run()
         return output_states
 
 

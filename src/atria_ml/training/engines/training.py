@@ -351,7 +351,7 @@ class TrainingEngine(AtriaEngine):
 
         return self
 
-    def run(self) -> State:
+    def run(self, resume_checkpoint: str | None) -> State:
         """
         Runs the training engine.
 
@@ -361,7 +361,9 @@ class TrainingEngine(AtriaEngine):
         from atria_ml.training.engines.utilities import FixedBatchIterator
 
         # load training state from checkpoint
-        self._load_training_state_from_checkpoint(self._engine)
+        self._load_training_state_from_checkpoint(
+            self._engine, resume_checkpoint=resume_checkpoint
+        )
 
         resume_epoch = self._engine.state.epoch
         if (
@@ -900,7 +902,9 @@ class TrainingEngine(AtriaEngine):
                 Events.COMPLETED, best_model_saver
             )
 
-    def _load_training_state_from_checkpoint(self, engine: Engine):
+    def _load_training_state_from_checkpoint(
+        self, engine: Engine, resume_checkpoint: str | None = None
+    ):
         """
         Loads the training state from a checkpoint.
 
@@ -924,17 +928,15 @@ class TrainingEngine(AtriaEngine):
                 save_weights_only=self._model_checkpoint_config.save_weights_only,
             )
             checkpoint_dir = Path(self._output_dir) / self._model_checkpoint_config.dir
-            resume_checkpoint_path = find_resume_checkpoint(
-                self._model_checkpoint_config.resume_checkpoint_file,
-                checkpoint_dir,
-                self._model_checkpoint_config.load_best_checkpoint_resume,
+            resume_checkpoint = resume_checkpoint or find_resume_checkpoint(
+                checkpoint_dir
             )
-            if resume_checkpoint_path is not None:
-                logger.info("Resuming training from checkpoint:")
-                logger.info(f"\t{resume_checkpoint_path}")
-                resume_checkpoint = torch.load(
-                    resume_checkpoint_path, map_location="cpu"
+            if resume_checkpoint is not None:
+                logger.info(
+                    f"Checkpoint detected, resuming training from {resume_checkpoint}. "
                 )
+                logger.info(f"\t{resume_checkpoint}")
+                resume_checkpoint = torch.load(resume_checkpoint, map_location="cpu")
 
                 if RUN_CONFIG_KEY in resume_checkpoint:
                     self._run_config.compare_configs(resume_checkpoint[RUN_CONFIG_KEY])

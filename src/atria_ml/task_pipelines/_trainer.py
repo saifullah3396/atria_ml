@@ -62,22 +62,22 @@ OPTIMIZER_DEFAULT_LIST = [
             output_dir="outputs/trainer/sequence_classification/${resolve_experiment_name:${experiment_name}}/",
         ),
         RegistryConfig(
-            name=TaskType.semantic_entity_recognition.value,
+            name=TaskType.token_classification.value,
             defaults=DEFAULTS_SELF
             + ENGINE_DEFAULT_LIST
             + OPTIMIZER_DEFAULT_LIST
             + DATA_PIPELINE_DEFAULT_LIST
             + [{"/model_pipeline@model_pipeline": "token_classification"}],
-            output_dir="outputs/trainer/semantic_entity_recognition/${resolve_experiment_name:${experiment_name}}/",
+            output_dir="outputs/trainer/token_classification/${resolve_experiment_name:${experiment_name}}/",
         ),
         RegistryConfig(
-            name=TaskType.layout_entity_recognition.value,
+            name=TaskType.layout_token_classification.value,
             defaults=DEFAULTS_SELF
             + ENGINE_DEFAULT_LIST
             + OPTIMIZER_DEFAULT_LIST
             + DATA_PIPELINE_DEFAULT_LIST
             + [{"/model_pipeline@model_pipeline": "layout_token_classification"}],
-            output_dir="outputs/trainer/layout_entity_recognition/${resolve_experiment_name:${experiment_name}}/",
+            output_dir="outputs/trainer/layout_token_classification/${resolve_experiment_name:${experiment_name}}/",
         ),
         RegistryConfig(
             name=TaskType.visual_question_answering.value,
@@ -133,6 +133,8 @@ class Trainer:
         visualization_engine: VisualizationEngine,
         test_engine: TestEngine,
         output_dir: str,
+        resume_checkpoint: str | None = None,
+        test_checkpoint: str | None = None,
         seed: int = 42,
         deterministic: bool = False,
         do_train: bool = True,
@@ -149,6 +151,8 @@ class Trainer:
         self._visualization_engine = visualization_engine if do_visualization else None
         self._test_engine = test_engine if do_test else None
         self._output_dir = output_dir
+        self._resume_checkpoint = resume_checkpoint
+        self._test_checkpoint = test_checkpoint
         self._seed = seed
         self._deterministic = deterministic
         self._do_train = do_train
@@ -306,6 +310,10 @@ class Trainer:
     def _build_test_engine(self) -> None:
         if self._test_engine is not None:
             logger.info("Setting up test engine")
+            logger.info(
+                "Initializing train dataloader with config: %s",
+                self._data_pipeline._dataloader_config.eval_config,
+            )
             test_dataloader = self._data_pipeline.test_dataloader()
             self._test_engine: AtriaEngine = self._test_engine.build(
                 output_dir=self._output_dir,
@@ -331,12 +339,12 @@ class Trainer:
     def train(self) -> None:
         if self._do_train:
             self._build_training_engine()
-            self._training_engine.run()
+            self._training_engine.run(resume_checkpoint=self._resume_checkpoint)
 
     def test(self) -> None:
         if self._do_test:
             self._build_test_engine()
-            self._test_engine.run()
+            self._test_engine.run(test_checkpoint=self._test_checkpoint)
 
     def run(self) -> None:
         self.train()

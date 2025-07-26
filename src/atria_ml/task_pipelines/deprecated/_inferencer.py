@@ -73,13 +73,13 @@ class Inferencer(RepresentationMixin):
                 "_self_",
             ]
         },
-        "semantic_entity_recognition": {
+        "token_classification": {
             "hydra_defaults": [
                 {"/engine@inference_engine": "default_inference_engine"},
                 "_self_",
             ]
         },
-        "layout_entity_recognition": {
+        "layout_token_classification": {
             "hydra_defaults": [
                 {"/engine@inference_engine": "default_inference_engine"},
                 "_self_",

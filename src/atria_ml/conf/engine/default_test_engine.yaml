@@ -13,7 +13,6 @@ metric_logging_prefix: null
 test_run: false
 use_fixed_batch_iterator: false
 checkpoints_dir: checkpoints
-test_checkpoint_file: null
 save_model_outputs_to_disk: false
 checkpoint_types: null
 with_amp: false

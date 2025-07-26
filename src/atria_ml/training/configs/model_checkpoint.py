@@ -37,9 +37,7 @@ class ModelCheckpointConfig(BaseModel):
         load_weights_only (bool): Whether to load only model weights. Defaults to False.
         every_n_steps (Optional[int]): Save checkpoints every n steps. Defaults to None.
         every_n_epochs (Optional[int]): Save checkpoints every n epochs. Defaults to 1.
-        load_best_checkpoint_resume (Optional[bool]): Whether to load the best checkpoint for resuming. Defaults to False.
         resume_from_checkpoint (Optional[bool]): Whether to resume training from a checkpoint if available. Defaults to True.
-        resume_checkpoint_file (Optional[str]): File name of the checkpoint to resume from. Defaults to None.
     """
 
     enabled: bool = True
@@ -53,9 +51,7 @@ class ModelCheckpointConfig(BaseModel):
     load_weights_only: bool = False
     every_n_steps: int | None = None
     every_n_epochs: int = 1
-    load_best_checkpoint_resume: bool = False
     resume_from_checkpoint: bool = True
-    resume_checkpoint_file: str | None = None
 
     def model_post_init(self, context):
         """

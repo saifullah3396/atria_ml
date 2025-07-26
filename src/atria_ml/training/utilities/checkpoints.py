@@ -26,17 +26,13 @@ from atria_core.logger.logger import get_logger
 logger = get_logger(__name__)
 
 
-def find_checkpoint_file(
-    filename, checkpoint_dir: str, load_best: bool = False, resume=True, quiet=False
-):
+def find_checkpoint_file_in_dir(checkpoint_dir: str, load_best: bool = False):
     """
     Locates a checkpoint file based on user input or criteria such as the latest or best checkpoint.
 
     Args:
-        filename (str): The name of the checkpoint file to locate. If None, the function searches for the latest or best checkpoint.
         checkpoint_dir (str): The directory where checkpoint files are stored.
         load_best (bool, optional): Whether to prioritize finding the best checkpoint. Defaults to False.
-        resume (bool, optional): Whether the checkpoint is for resuming training. Defaults to True.
         quiet (bool, optional): Whether to suppress logging messages. Defaults to False.
 
     Returns:
@@ -46,24 +42,12 @@ def find_checkpoint_file(
         - If `filename` is provided and exists, it is returned directly.
         - If no `filename` is provided, the function searches for checkpoint files in `checkpoint_dir`.
         - If `load_best` is True, only checkpoints containing "best" in their name are considered.
-        - If `resume` is True, logs a message about resuming training from the located checkpoint.
     """
     import glob
     import os
-    from pathlib import Path
 
     if not checkpoint_dir.exists():
         return
-
-    if filename is not None:
-        if Path(filename).exists():
-            return Path(filename)
-        elif Path(checkpoint_dir / filename).exists():
-            return Path(checkpoint_dir / filename)
-        else:
-            logger.warning(
-                f"User provided checkpoint file filename={filename} not found."
-            )
 
     list_checkpoints = glob.glob(str(checkpoint_dir) + "/*.pt")
     if len(list_checkpoints) > 0:
@@ -73,29 +57,14 @@ def find_checkpoint_file(
             list_checkpoints = [c for c in list_checkpoints if "best" in c]
 
         if len(list_checkpoints) > 0:
-            latest_checkpoint = max(list_checkpoints, key=os.path.getctime)
-            if resume:
-                if not quiet:
-                    logger.info(
-                        f"Checkpoint detected, resuming training from {latest_checkpoint}. To avoid this behavior, change "
-                        "the `output_dir` or add `overwrite_output_dir` to train from scratch."
-                    )
-            else:
-                if not quiet:
-                    logger.info(
-                        f"Checkpoint detected, testing model using checkpoint {latest_checkpoint}."
-                    )
-            return latest_checkpoint
+            return max(list_checkpoints, key=os.path.getctime)
 
 
-def find_resume_checkpoint(
-    resume_checkpoint_file: str, checkpoint_dir: str, load_best: bool = False
-):
+def find_resume_checkpoint(checkpoint_dir: str):
     """
     Finds a checkpoint file for resuming training.
 
     Args:
-        resume_checkpoint_file (str): The name of the checkpoint file to locate for resuming training.
         checkpoint_dir (str): The directory where checkpoint files are stored.
         load_best (bool, optional): Whether to prioritize finding the best checkpoint. Defaults to False.
 
@@ -105,22 +74,14 @@ def find_resume_checkpoint(
     Notes:
         - This function is a wrapper around `find_checkpoint_file` with `resume` set to True.
     """
-    return find_checkpoint_file(
-        filename=resume_checkpoint_file,
-        checkpoint_dir=checkpoint_dir,
-        load_best=load_best,
-        resume=True,
-    )
+    return find_checkpoint_file_in_dir(checkpoint_dir=checkpoint_dir, load_best=False)
 
 
-def find_test_checkpoint(
-    test_checkpoint_file: str, checkpoint_dir: str, load_best: bool = False
-):
+def find_test_checkpoint(checkpoint_dir: str, load_best: bool = False):
     """
     Finds a checkpoint file for testing a model.
 
     Args:
-        test_checkpoint_file (str): The name of the checkpoint file to locate for testing.
         checkpoint_dir (str): The directory where checkpoint files are stored.
         load_best (bool, optional): Whether to prioritize finding the best checkpoint. Defaults to False.
 
@@ -130,9 +91,6 @@ def find_test_checkpoint(
     Notes:
         - This function is a wrapper around `find_checkpoint_file` with `resume` set to False.
     """
-    return find_checkpoint_file(
-        filename=test_checkpoint_file,
-        checkpoint_dir=checkpoint_dir,
-        load_best=load_best,
-        resume=False,
+    return find_checkpoint_file_in_dir(
+        checkpoint_dir=checkpoint_dir, load_best=load_best, resume=False
     )
