@@ -714,6 +714,11 @@ class TrainingEngine(AtriaEngine):
                 metrics=metrics,
             )
 
+        @engine.on(Events.EXCEPTION_RAISED)
+        def progress_on_terminate(exception: Exception) -> None:
+            self._tb_logger.close()
+            self._progress_bar.close()
+
     def _configure_tb_logger(self, engine: Engine):
         """
         Configures the TensorBoard logger.

@@ -98,6 +98,12 @@ class AtriaEngine:
         self._use_fixed_batch_iterator = use_fixed_batch_iterator
         self._checkpoints_dir = checkpoints_dir
         self._engine = None
+        self._engine_step = None
+        self._device = None
+        self._tb_logger = None
+        self._output_dir = None
+        self._model_pipeline = None
+        self._dataloader = None
         self._progress_bar = None
         self._event_handlers = []
 
@@ -223,6 +229,30 @@ class AtriaEngine:
             epoch_length=self._epoch_length,
         )
 
+    def cleanup(self) -> None:
+        """
+        Cleanup resources used by the engine.
+        """
+        if self._engine is not None:
+            self._engine_step = None
+            self._engine = None
+
+        if self._dataloader is not None:
+            self._dataloader = None
+
+        if self._model_pipeline is not None:
+            self._model_pipeline._progress_bar = None
+            self._model_pipeline._tb_logger = None
+            self._model_pipeline = None
+
+        if self._tb_logger is not None:
+            self._tb_logger.close()
+            self._tb_logger = None
+
+        if self._progress_bar is not None:
+            self._progress_bar.close()
+            self._progress_bar = None
+
     def _initialize_ignite_engine(self) -> Engine:
         """
         Initialize the engine.
@@ -341,6 +371,13 @@ class AtriaEngine:
                     tag=self._engine_step.stage,
                     metrics=engine.state.metrics,
                 )
+
+            @engine.on(Events.TERMINATE | Events.INTERRUPT)
+            def progress_on_terminate(engine: Engine) -> None:
+                logger.info(
+                    f"Engine [{self.__class__.__name__}] terminated after {engine.state.epoch} epochs."
+                )
+                self._progress_bar.close()
 
     def _configure_tb_logger(self, engine: Engine):
         """

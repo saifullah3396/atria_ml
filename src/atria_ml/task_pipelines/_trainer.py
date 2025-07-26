@@ -5,6 +5,7 @@ from atria_models.pipelines.atria_model_pipeline import AtriaModelPipeline
 from atria_registry.registry_config import RegistryConfig
 
 from atria_ml.registry import TASK_PIPELINE
+from atria_ml.training.engines.atria_engine import AtriaEngine
 from atria_ml.training.engines.evaluation import (
     TestEngine,
     ValidationEngine,
@@ -158,22 +159,6 @@ class Trainer:
         self._test_run = test_run
 
     @property
-    def train_dataloader(self):
-        return self._train_dataloader
-
-    @property
-    def validation_dataloader(self):
-        return self._validation_dataloder
-
-    @property
-    def test_dataloader(self):
-        return self._test_dataloader
-
-    @property
-    def visualization_dataloader(self):
-        return self._visualization_data_loader
-
-    @property
     def model_pipeline(self):
         return self._model_pipeline
 
@@ -242,50 +227,55 @@ class Trainer:
         )
         logger.info(self._model_pipeline)
 
-    def _build_dataloaders(self) -> None:
+    def _build_training_dataloaders(self) -> None:
         logger.info(
             "Initializing train dataloader with config: %s",
             self._data_pipeline._dataloader_config.train_config,
         )
-        self._train_dataloader = self._data_pipeline.train_dataloader()
+        train_dataloader = self._data_pipeline.train_dataloader()
+        validation_dataloader = None
+        visualization_dataloader = None
         if self._validation_engine is not None:
             # check if validation dataset is available
             logger.info(
                 "Initializing validation dataloader with config: %s",
                 self._data_pipeline._dataloader_config.eval_config,
             )
-            self._validation_dataloder = self._data_pipeline.validation_dataloader()
-            if self._validation_dataloder is None:
+            validation_dataloader = self._data_pipeline.validation_dataloader()
+            if validation_dataloader is None:
                 logger.warning(
                     "You have set do_validation=True but there is no validation dataset available. "
                     "To create a validation dataset from the training dataset, set dataset_splitter in the config. "
                     "Using test dataset for validation."
                 )
-                self._validation_dataloder = self._data_pipeline.test_dataloader()
+                validation_dataloader = self._data_pipeline.test_dataloader()
         if self._visualization_engine is not None:
             # initilize the validation engine from partial
             # by default, visualization engine uses the train dataloader as it is
             # generally to be used for generative tasks
             logger.info("Initializing train dataloader for visualization.")
-            self._visualization_data_loader = self._data_pipeline.validation_dataloader(
+            visualization_dataloader = self._data_pipeline.validation_dataloader(
                 batch_size=self._visualization_batch_size
             )
-            if self._visualization_data_loader is None:
-                self._visualization_data_loader = self._data_pipeline.test_dataloader(
+            if visualization_dataloader is None:
+                visualization_dataloader = self._data_pipeline.test_dataloader(
                     batch_size=self._visualization_batch_size
                 )
-        logger.info("Initializing test dataloader.")
-        self._test_dataloader = self._data_pipeline.test_dataloader()
+
+        return train_dataloader, validation_dataloader, visualization_dataloader
 
     def _build_training_engine(self) -> None:
         # initilize the test engine from partial
+        train_dataloader, validation_dataloader, visualization_dataloader = (
+            self._build_training_dataloaders()
+        )
         if self._training_engine is not None:
             logger.info("Setting up training engine")
-            self._training_engine = self._training_engine.build(
+            self._training_engine: AtriaEngine = self._training_engine.build(
                 run_config=self._run_config,
                 output_dir=self._output_dir,
                 model_pipeline=self._model_pipeline,
-                dataloader=self._train_dataloader,
+                dataloader=train_dataloader,
                 device=self._device,
                 tb_logger=self._tb_logger,
                 validation_engine=self._validation_engine,
@@ -294,20 +284,20 @@ class Trainer:
 
         if self._validation_engine is not None:
             logger.info("Setting up validation engine")
-            self._validation_engine = self._validation_engine.build(
+            self._validation_engine: AtriaEngine = self._validation_engine.build(
                 output_dir=self._output_dir,
                 model_pipeline=self._model_pipeline,
-                dataloader=self._validation_dataloder,
+                dataloader=validation_dataloader,
                 device=self._device,
                 tb_logger=self._tb_logger,
             )
 
         if self._visualization_engine is not None:
             logger.info("Setting up visualization engine")
-            self._visualization_engine = self._visualization_engine.build(
+            self._visualization_engine: AtriaEngine = self._visualization_engine.build(
                 output_dir=self._output_dir,
                 model_pipeline=self._model_pipeline,
-                dataloader=self._visualization_data_loader,
+                dataloader=visualization_dataloader,
                 device=self._device,
                 tb_logger=self._tb_logger,
             )
@@ -315,10 +305,11 @@ class Trainer:
     def _build_test_engine(self) -> None:
         if self._test_engine is not None:
             logger.info("Setting up test engine")
-            self._test_engine = self._test_engine.build(
+            test_dataloader = self._data_pipeline.test_dataloader()
+            self._test_engine: AtriaEngine = self._test_engine.build(
                 output_dir=self._output_dir,
                 model_pipeline=self._model_pipeline,
-                dataloader=self._test_dataloader,
+                dataloader=test_dataloader,
                 device=self._device,
                 tb_logger=self._tb_logger,
             )
@@ -335,7 +326,6 @@ class Trainer:
         self._setup_logging()
         self._build_data_pipeline()
         self._build_model_pipeline()
-        self._build_dataloaders()
 
     def train(self) -> None:
         if self._do_train:
@@ -348,12 +338,5 @@ class Trainer:
             self._test_engine.run()
 
     def run(self) -> None:
-        try:
-            self.train()
-        except KeyboardInterrupt as e:
-            logger.warning(f"Training interrupted: {e}")
-
-        try:
-            self.test()
-        except KeyboardInterrupt as e:
-            logger.warning(f"Testing interrupted: {e}")
+        self.train()
+        self.test()
