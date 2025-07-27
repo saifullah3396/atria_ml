@@ -119,7 +119,12 @@ OPTIMIZER_DEFAULT_LIST = [
             },
         ),
     ],
-    zen_meta={"n_devices": 1, "backend": "nccl", "experiment_name": "_to_be_resolved_"},
+    zen_meta={
+        "pipeline_name": "atria_trainer",
+        "n_devices": 1,
+        "backend": "nccl",
+        "experiment_name": "_to_be_resolved_",
+    },
     zen_exclude=["hydra", "package", "version"],
     is_global_package=True,
 )
@@ -323,13 +328,16 @@ class Trainer:
                 tb_logger=self._tb_logger,
             )
 
-    def build(self, local_rank: int, run_config: RunConfig) -> None:
+    def build(
+        self, local_rank: int, experiment_name: str, run_config: RunConfig
+    ) -> None:
         import logging
 
         for handler in logger.handlers:
             if isinstance(handler, logging.FileHandler):
                 logger.info(f"Log file path: {handler.baseFilename}")
 
+        self._experiment_name = experiment_name
         self._run_config = run_config
         self._initialize_runtime(local_rank=local_rank)
         self._setup_logging()

@@ -58,6 +58,8 @@ if TYPE_CHECKING:
 
 logger = get_logger(__name__)
 
+EXPERIMENT_NAME_KEY = "experiment_name"
+METRICS_KEY = "metrics"
 TRAINING_ENGINE_KEY = "training_engine"
 MODEL_PIPELINE_CHECKPOINT_KEY = "model_pipeline"
 RUN_CONFIG_KEY = "run_config"

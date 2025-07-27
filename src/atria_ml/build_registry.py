@@ -29,7 +29,8 @@ from atria_ml.schedulers.lambda_lr import *  # noqa
 from atria_ml.schedulers.polynomial_decay_lr import *  # noqa
 
 # from atria_ml.task_pipelines._data_visualizer import *  # noqa
-# from atria_ml.task_pipelines._evaluator import *  # noqa
+from atria_ml.task_pipelines._evaluator import *  # noqa
+
 # from atria_ml.task_pipelines._inferencer import *  # noqa
 from atria_ml.task_pipelines._trainer import *  # noqa
 

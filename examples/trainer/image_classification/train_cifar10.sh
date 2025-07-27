@@ -2,7 +2,7 @@
 
 # # task_pipeline=trainer/image_classification \
 # uv run python \
-#     -m atria_ml.task_pipelines.trainer \
+#     -m atria_ml.task_pipelines.run \
 #     task_pipeline=trainer/image_classification \
 #     dataset@data_pipeline.dataset=cifar10/default \
 #     model_pipeline.model.model_name=resnet18 \
@@ -15,7 +15,7 @@
 
 # task_pipeline=trainer/image_classification \
 uv run python \
-    -m atria_ml.task_pipelines.trainer \
+    -m atria_ml.task_pipelines.run \
     task_pipeline=trainer/image_classification \
     dataset@data_pipeline.dataset=cifar10/default \
     model@model_pipeline.model=cifar10_models/resnet18 \

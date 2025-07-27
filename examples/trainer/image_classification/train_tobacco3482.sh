@@ -1,7 +1,7 @@
 #!/bin/bash -l
 
 uv run python \
-    -m atria_ml.task_pipelines.trainer \
+    -m atria_ml.task_pipelines.run \
     task_pipeline=trainer/image_classification \
     dataset@data_pipeline.dataset=tobacco3482/default \
     model_pipeline.model.timm_name=resnet50 \

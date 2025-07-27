@@ -1,0 +1,22 @@
+# @package __global__
+_target_: hydra_zen.funcs.zen_processing
+_zen_target: atria_ml.task_pipelines._evaluator.Evaluator
+_zen_partial: false
+_zen_exclude:
+- pipeline_name
+- n_devices
+- backend
+- experiment_name
+defaults:
+- /engine@test_engine: default_test_engine
+- /data_pipeline@data_pipeline: default
+- /model_pipeline@model_pipeline: sequence_classification
+- _self_
+test_checkpoint: ???
+output_dir: outputs/evaluator/sequence_classification/${resolve_experiment_name:${experiment_name}}/
+prepare_atria_ckpt: true
+do_eval: true
+pipeline_name: atria_evaluator
+n_devices: 1
+backend: nccl
+experiment_name: _to_be_resolved_

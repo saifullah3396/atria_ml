@@ -17,7 +17,6 @@ def initialize_and_run(
     from atria_core.utilities.pydantic import pydantic_parser
     from hydra_zen import instantiate
 
-    from atria_ml.task_pipelines._trainer import Trainer
     from atria_ml.training.engines.utilities import RunConfig
 
     hydra_config = HydraConfig.get()
@@ -29,13 +28,14 @@ def initialize_and_run(
     config._zen_exclude.append("package")  # exclude atria base config args
     config._zen_exclude.append("version")  # exclude atria base config args
 
-    logger.info("Initializing Atria Trainer...")
-
-    atria_trainer: Trainer = instantiate(
-        config, _convert_="object", _target_wrapper_=pydantic_parser
+    logger.info(f"Initializing task pipeline: {config.pipeline_name}")
+    pipeline = instantiate(config, _convert_="object", _target_wrapper_=pydantic_parser)
+    pipeline.build(
+        local_rank=local_rank,
+        experiment_name=config.experiment_name,
+        run_config=RunConfig(data=config),
     )
-    atria_trainer.build(local_rank=local_rank, run_config=RunConfig(data=config))
-    return atria_trainer.run()
+    return pipeline.run()
 
 
 @hydra.main(version_base=None, config_path="../conf", config_name="__atria__")

@@ -3,6 +3,7 @@ _target_: hydra_zen.funcs.zen_processing
 _zen_target: atria_ml.task_pipelines._trainer.Trainer
 _zen_partial: false
 _zen_exclude:
+- pipeline_name
 - n_devices
 - backend
 - experiment_name
@@ -50,6 +51,7 @@ do_visualization: true
 do_test: true
 vis_batch_size: 64
 test_run: false
+pipeline_name: atria_trainer
 n_devices: 1
 backend: nccl
 experiment_name: _to_be_resolved_
