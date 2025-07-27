@@ -141,9 +141,6 @@ class Evaluator:
             self._tb_logger = _setup_tensorboard(self._output_dir)
 
     def _build_data_pipeline(self):
-        # build data module
-        self._model_pipeline.config.runtime_transforms.compose()
-
         logger.info("Setting up data pipeline")
         self._data_pipeline.build(
             runtime_transforms=self._model_pipeline.config.runtime_transforms
@@ -206,7 +203,7 @@ class Evaluator:
 
         checkpoint = {
             EXPERIMENT_NAME_KEY: self._experiment_name,
-            RUN_CONFIG_KEY: self._run_config,
+            RUN_CONFIG_KEY: self._run_config.state_dict(),
             MODEL_PIPELINE_CHECKPOINT_KEY: self._model_pipeline.state_dict(),
         }
         if state is not None:

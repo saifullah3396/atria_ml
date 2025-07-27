@@ -220,9 +220,6 @@ class Trainer:
         self._tb_logger = _setup_tensorboard(self._output_dir)
 
     def _build_data_pipeline(self):
-        # build data module
-        self._model_pipeline.config.runtime_transforms.compose()
-
         logger.info("Setting up data pipeline")
         self._data_pipeline.build(
             runtime_transforms=self._model_pipeline.config.runtime_transforms
