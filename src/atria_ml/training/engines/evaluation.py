@@ -27,7 +27,6 @@ License: MIT
 
 from __future__ import annotations
 
-from collections.abc import Iterator
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -36,18 +35,14 @@ from atria_core.logger.logger import get_logger
 from atria_ml.registry import ENGINE
 from atria_ml.training.configs.logging_config import LoggingConfig
 from atria_ml.training.engines.atria_engine import AtriaEngine
-from atria_ml.training.engines.engine_steps.base import BaseEngineStep
 from atria_ml.training.engines.engine_steps.evaluation import (
     FeatureExtractorStep,
-    InferenceStep,
     TestStep,
     ValidationStep,
     VisualizationStep,
 )
 
 if TYPE_CHECKING:
-    import torch
-    from atria_models.pipelines.atria_model_pipeline import AtriaModelPipeline
     from ignite.engine import Engine, State
 
     from atria_ml.training.handlers.ema_handler import AtriaEMAHandler
@@ -564,131 +559,6 @@ class VisualizationEngine(AtriaEngine):
                 "EMA handler to `attach_to_engine` to use ema for visualization."
             )
             self._ema_handler.swap_params()
-
-
-@ENGINE.register("default_inference_engine")
-class InferenceEngine(AtriaEngine):
-    """
-    Test InferenceEngine
-
-    This engine is responsible for managing inference tasks during the training process.
-    It supports various configurations for different types of inference tasks.
-
-    Attributes:
-        _REGISTRY_CONFIGS (ClassVar[Type[dict]]): Registry configurations for testing tasks.
-    """
-
-    def __init__(
-        self,
-        epoch_length: int | None = None,
-        outputs_to_running_avg: list[str] | None = None,
-        logging: LoggingConfig = LoggingConfig(),
-        metric_logging_prefix: str | None = None,
-        test_run: bool = False,
-        use_fixed_batch_iterator: bool = False,
-        with_amp: bool = False,
-    ):
-        """
-        Initialize the InferenceEngine.
-
-        Args:
-            engine_step (InferenceStep): Inference step to attach to the engine.
-            epoch_length (Optional[int]): Length of each epoch.
-            outputs_to_running_avg (Optional[List[str]]): Outputs to calculate running average.
-            logging (LoggingConfig): Logging configuration.
-            metric_logging_prefix (Optional[str]): Prefix for metric logging.
-            test_run (bool): Whether to run in test mode.
-            use_fixed_batch_iterator (bool): Whether to use fixed batch iterator.
-        """
-        super().__init__(
-            max_epochs=1,
-            epoch_length=epoch_length,
-            outputs_to_running_avg=outputs_to_running_avg,
-            logging=logging,
-            metric_logging_prefix=metric_logging_prefix,
-            test_run=test_run,
-            use_fixed_batch_iterator=use_fixed_batch_iterator,
-        )
-        self._with_amp = with_amp
-
-    def _setup_engine_step(self) -> BaseEngineStep:
-        """
-        Setup the engine step for inference.
-
-        Returns:
-            BaseEngineStep: The engine step instance.
-        """
-        return InferenceStep(
-            model_pipeline=self._model_pipeline,
-            device=self._device,
-            with_amp=self._with_amp,
-            test_run=self._test_run,
-        )
-
-    def build(
-        self, model_pipeline: AtriaModelPipeline, device: str | torch.device
-    ) -> AtriaEngine:
-        """
-        Build the engine with the specified configurations.
-
-        Args:
-            model_pipeline (AtriaModelPipeline): Model pipeline to use.
-            device (Union[str, torch.device]): Device to run the engine on.
-
-        Returns:
-            AtriaEngine: The configured engine instance.
-        """
-        import torch
-        from ignite.handlers import ProgressBar
-
-        self._model_pipeline = model_pipeline
-        self._device = torch.device(device)
-
-        # initialize the engine step
-        self._engine_step = self._setup_engine_step()
-
-        # initialize the progress bar
-        self._progress_bar = ProgressBar(
-            desc=f"Stage [{self._engine_step.stage}]", persist=True
-        )
-
-        # move task module models to device
-        self._model_pipeline.to_device(self._device, sync_bn=self._sync_batchnorm)
-
-        # initialize engine
-        self._engine = self._initialize_ignite_engine()
-
-        return self
-
-    def _configure_engine(self, engine: Engine) -> Engine:
-        """
-        Configure the engine with handlers and settings.
-
-        Args:
-            engine (Engine): The engine instance to configure.
-        """
-        self._configure_metrics(engine=engine)
-        self._configure_progress_bar(engine=engine)
-        return engine
-
-    def run(self, dataloader: Iterator) -> dict[str, State]:
-        """
-        Run the test engine.
-
-        Returns:
-            dict[str, State]: Output states for each checkpoint type.
-        """
-        from atria_ml.training.engines.utilities import FixedBatchIterator
-
-        # run inference
-        return self._engine.run(
-            (
-                FixedBatchIterator(dataloader, dataloader.batch_size)
-                if self._use_fixed_batch_iterator
-                else dataloader
-            ),
-            max_epochs=1,
-        )
 
 
 @ENGINE.register("feature_extractor_engine/default")

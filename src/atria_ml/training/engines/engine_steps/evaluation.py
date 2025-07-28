@@ -238,44 +238,6 @@ class TestStep(EvaluationStep):
         )
 
 
-class InferenceStep(EvaluationStep):
-    """
-    Engine step for inference.
-
-    This step is responsible for executing the inference logic during the training process.
-    """
-
-    @property
-    def stage(self) -> TrainingStage:
-        """
-        Returns the training stage for this step.
-
-        Returns:
-            TrainingStage: The inference stage.
-        """
-        return TrainingStage.predict
-
-    def _model_step(
-        self, engine: "Engine", batch: Sequence["torch.Tensor"], test_run: bool = False
-    ) -> Any | tuple["torch.Tensor"]:
-        """
-        Performs the inference step.
-
-        Args:
-            engine (Engine): The engine executing this step.
-            batch (Sequence[torch.Tensor]): The batch of data to process.
-            test_run (bool): Whether this is a test run. Defaults to False.
-
-        Returns:
-            Union[Any, Tuple[torch.Tensor]]: The result of the inference step.
-        """
-        # forward pass
-        # inferencer can also be used to evaluate the metrics
-        return self._model_pipeline.evaluation_step(
-            evaluation_engine=engine, batch=batch, stage=self.stage, test_run=test_run
-        )
-
-
 class FeatureExtractorStep(EvaluationStep):
     """
     Engine step for feature extraction.
