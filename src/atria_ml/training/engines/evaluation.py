@@ -31,7 +31,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from atria_core.logger.logger import get_logger
-
 from atria_ml.registry import ENGINE
 from atria_ml.training.configs.logging_config import LoggingConfig
 from atria_ml.training.engines.atria_engine import AtriaEngine
@@ -43,9 +42,8 @@ from atria_ml.training.engines.engine_steps.evaluation import (
 )
 
 if TYPE_CHECKING:
-    from ignite.engine import Engine, State
-
     from atria_ml.training.handlers.ema_handler import AtriaEMAHandler
+    from ignite.engine import Engine, State
 
 
 logger = get_logger(__name__)
@@ -77,7 +75,6 @@ class ValidationEngine(AtriaEngine):
         metric_logging_prefix: str | None = None,
         test_run: bool = False,
         use_fixed_batch_iterator: bool = False,
-        checkpoints_dir: str = "checkpoints",
         validate_every_n_epochs: float | None = 1,
         validate_on_start: bool = True,
         min_train_epochs_for_best: int | None = 1,
@@ -110,7 +107,6 @@ class ValidationEngine(AtriaEngine):
             metric_logging_prefix=metric_logging_prefix,
             test_run=test_run,
             use_fixed_batch_iterator=use_fixed_batch_iterator,
-            checkpoints_dir=checkpoints_dir,
         )
         self._validate_every_n_epochs = validate_every_n_epochs
         self._validate_on_start = validate_on_start
@@ -258,7 +254,6 @@ class TestEngine(AtriaEngine):
         metric_logging_prefix: str | None = None,
         test_run: bool = False,
         use_fixed_batch_iterator: bool = False,
-        checkpoints_dir: str = "checkpoints",
         save_model_outputs_to_disk: bool = False,
         checkpoint_types: list[str] | None = None,
         with_amp: bool = False,
@@ -287,8 +282,8 @@ class TestEngine(AtriaEngine):
             metric_logging_prefix=metric_logging_prefix,
             test_run=test_run,
             use_fixed_batch_iterator=use_fixed_batch_iterator,
-            checkpoints_dir=checkpoints_dir,
         )
+        self._checkpoints_dir = checkpoints_dir
         self._save_model_outputs_to_disk = save_model_outputs_to_disk
         self._checkpoint_types = checkpoint_types or ["last", "best"]
         self._with_amp = with_amp
@@ -313,9 +308,8 @@ class TestEngine(AtriaEngine):
             engine (Engine): Ignite engine instance.
             output_name (str): Path to the output file.
         """
-        from ignite.engine import Events
-
         from atria_ml.training.utilities.model_output_saver import ModelOutputSaver
+        from ignite.engine import Events
 
         if self._save_model_outputs_to_disk:
             engine.add_event_handler(
@@ -421,7 +415,6 @@ class VisualizationEngine(AtriaEngine):
         metric_logging_prefix: str | None = None,
         test_run: bool = False,
         use_fixed_batch_iterator: bool = False,
-        checkpoints_dir: str = "checkpoints",
         visualize_every_n_epochs: float | None = 1,
         visualize_on_start: bool = False,
         use_ema_for_visualize: bool = False,
@@ -451,7 +444,6 @@ class VisualizationEngine(AtriaEngine):
             metric_logging_prefix=metric_logging_prefix,
             test_run=test_run,
             use_fixed_batch_iterator=use_fixed_batch_iterator,
-            checkpoints_dir=checkpoints_dir,
         )
         self._visualize_every_n_epochs = visualize_every_n_epochs
         self._visualize_on_start = visualize_on_start

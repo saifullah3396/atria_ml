@@ -29,7 +29,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from atria_core.logger.logger import get_logger
-
 from atria_ml.training.configs.logging_config import LoggingConfig
 from atria_ml.training.engines.engine_steps.base import BaseEngineStep
 
@@ -57,7 +56,6 @@ class AtriaEngine:
         sync_batchnorm (bool): Whether to synchronize batch normalization across devices.
         test_run (bool): Whether this is a test run.
         use_fixed_batch_iterator (bool): Whether to use a fixed batch iterator.
-        checkpoints_dir (str): Directory for saving checkpoints.
     """
 
     def __init__(
@@ -70,7 +68,6 @@ class AtriaEngine:
         sync_batchnorm: bool = False,
         test_run: bool = False,
         use_fixed_batch_iterator: bool = False,
-        checkpoints_dir: str = "checkpoints",
     ):
         """
         Initialize the AtriaEngine instance.
@@ -84,7 +81,6 @@ class AtriaEngine:
             sync_batchnorm (bool): Whether to synchronize batch normalization across devices.
             test_run (bool): Whether this is a test run.
             use_fixed_batch_iterator (bool): Whether to use a fixed batch iterator.
-            checkpoints_dir (str): Directory for saving checkpoints.
         """
         self._max_epochs = max_epochs
         self._epoch_length = epoch_length
@@ -96,7 +92,6 @@ class AtriaEngine:
         self._sync_batchnorm = sync_batchnorm
         self._test_run = test_run
         self._use_fixed_batch_iterator = use_fixed_batch_iterator
-        self._checkpoints_dir = checkpoints_dir
         self._engine = None
         self._engine_step = None
         self._device = None
@@ -351,9 +346,8 @@ class AtriaEngine:
             engine (Engine): The engine instance.
         """
         import ignite.distributed as idist
-        from ignite.engine import Events
-
         from atria_ml.training.engines.utilities import _log_eval_metrics
+        from ignite.engine import Events
 
         if idist.get_rank() == 0:
             self._progress_bar.attach(
