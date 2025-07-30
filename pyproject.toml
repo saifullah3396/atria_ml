@@ -135,13 +135,13 @@ torchvision = [
 ]
 mmcv = { url = "https://download.openmmlab.com/mmcv/dist/cu121/torch2.1.0/mmcv-2.1.0-cp311-cp311-manylinux1_x86_64.whl" }
 datadings = { git = "https://github.com/saifullah3396/datadings.git" }
-atria-registry = { path = "../atria_registry", editable = true }
-atria-models = { path = "../atria_models", editable = true }
-atria-hub = { path = "../atria_hub", editable = true }
-atria-core = { path = "../atria_core", editable = true }
-atria-transforms = { path = "../atria_transforms", editable = true }
-atria-datasets = { path = "../atria_datasets", editable = true }
-atria-metrics = { path = "../atria_metrics", editable = true }
+atria-registry = { path = "https://github.com/saifullah3396/atria_registry" }
+atria-models = { path = "https://github.com/saifullah3396/atria_models" }
+atria-hub = { path = "https://github.com/saifullah3396/atria_hub" }
+atria-core = { path = "https://github.com/saifullah3396/atria_core" }
+atria-transforms = { path = "https://github.com/saifullah3396/atria_transforms" }
+atria-datasets = { path = "https://github.com/saifullah3396/atria_datasets" }
+atria-metrics = { path = "https://github.com/saifullah3396/atria_metrics" }
 
 [[tool.uv.index]]
 name = "pytorch-cpu"
